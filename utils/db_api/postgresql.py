@@ -3,31 +3,290 @@ import logging
 import psycopg2
 
 
-class Database:
+class BaseDatabase:
     def __init__(self):
-        self.low_db = LowLevelDb()
+        self.low_db = BaseLowDatabase()
+
+    def get_students(self):
+        raw_res = self.low_db.select_student()
+        res = raw_res # Тут будет обработка
+        return res
+
+    def get_teachers(self):
+        raw_res = self.low_db.select_teachers()
+        res = raw_res  # Тут будет обработка
+        return res
+
+    def get_admins(self):
+        raw_res = self.low_db.select_admins()
+        res = raw_res  # Тут будет обработка
+        return res
+
+    def get_bells(self):
+        raw_res = self.low_db.select_bells()
+        res = raw_res  # Тут будет обработка
+        return res
+
+    def get_timetable(self):
+        pass
+
+    def get_faculty(self):
+        raw_res = self.low_db.select_facultyes()
+        res = raw_res  # Тут будет обработка
+        return res
+
+    def get_speciality(self):
+        raw_res = self.low_db.select_specialization()
+        res = raw_res  # Тут будет обработка
+        return res
+
+    def get_homework(self):
+        raw_res = self.low_db.select_homework()
+        res = raw_res
+        return res
+
+    def get_id_teacher_by_name(self, name):
+        first_id = self.low_db.select_id_teacher_by_name(name)[0][0]
+        return first_id
+
+    def exist_bell_by_id(self, id):
+        res = self.low_db.get_bell_by_id(id)
+        if res:
+            return True
+        else:
+            return False
+
+
+class DatabaseForAdmin(BaseDatabase):
+
+    def __init__(self):
+        self.low_db = LowDatabaseForAdmin()
+        super().__init__()
 
     def save_teacher(self, full_name, name, password):
         self.low_db.insert_teacher(full_name=full_name,
                                    name=name,
                                    password=password)
 
-    def get_speciality_id_by_name(self, name_spec):
-        res = self.low_db.select_spec_id_by_name(name_spec)
-        return res[0]
-
-    def save_student(self,full_name,password,name, id_spec, course):
+    def save_student(self, full_name, password,name, id_spec, course):
         self.low_db.insert_student(full_name=full_name,
                                    password=password,
                                    name=name,
                                    id_spec=id_spec,
                                    course=course)
 
-    def set_dean(self, name, password):
-        res = self.low_db.insert_dean(name=name,
+    def save_admin(self, name, password):
+        res = self.low_db.insert_admin(name=name,
                                       password=password,
                                       full_name='')
         return res
+
+    def save_subject(self, subject, teacher):
+        my_id = self.get_id_teacher_by_name(name=teacher)
+        if my_id:
+            self.low_db.insert_subject(subject=subject,
+                                       teacher=my_id)
+            return True
+        else:
+            return {'message': 'Преподаватель введен некорректно'}
+
+    def save_bells(self, id, first_time, second_time):
+        flag = self.exist_bell_by_id(id)
+        if flag:
+            self.low_db.change_bell(id=id,
+                                    first_time=first_time,
+                                    second_time=second_time)
+        else:
+            self.low_db.insert_bell(first_time=first_time,
+                                    second_time=second_time)
+        return True
+
+class DatabaseForTeacher(BaseDatabase):
+    def __init__(self):
+        self.low_db = LowDatabaseForTeacher()
+
+
+class DatabaseForStudent(BaseDatabase):
+    def __init__(self):
+        self.low_db = LowDatabaseForStudent()
+
+
+class BaseLowDatabase:
+    def __init__(self):
+        self.conn = psycopg2.connect(host="localhost",   # Стандартный вход под дефолтным пользователем постгреса
+                                     port=5432,
+                                     database="University",
+                                     user="postgres",
+                                     password="i183")
+
+    def select_teachers(self):
+        with self.conn.cursor() as cur:
+            sql = 'Select * from teacher ' \
+                  'where is_deleted <>TRUE '
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_admins(self):
+        with self.conn.cursor() as cur:
+            sql = 'Select * from dean d' \
+             'where d.is_deleted <> TRUE;'
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_bells(self):
+        with self.conn.cursor() as cur:
+            sql = 'Select * from bell;'
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_facultyes(self):
+        with self.conn.cursor() as cur:
+            sql = 'Select * from faculty'
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_specialization(self):
+        with self.conn.cursor() as cur:
+            sql = 'select s.name, f.name ' \
+                  'from speciality s ' \
+                  'inner join faculty f on f.id = s.id_fac; '
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_student(self, names=None):
+        with self.conn.cursor() as cur:
+            if names:
+                sql = 'Select * from student'
+            else:
+                sql = 'select s.username, s.full_name, s.course, spc.name ' \
+                      'from student s ' \
+                      'inner join speciality spc on spc.id = s.id_spec '
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_homework(self):
+        with self.conn.cursor() as cur:
+            sql = 'select h.status as "Статус задания", s.name as "Название предмета", std.username as "Имя студента", ' \
+                  't.task as "Название задачи", t.addition as "Условие задачи" ' \
+                  'from homework h ' \
+                  'inner join subject s on s.id = h.id_subject ' \
+                  'inner join student std on std.id = h.id_student ' \
+                  'inner join task t on t.id = h.task_id;'
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_id_teacher_by_name(self, name):
+        with self.conn.cursor() as cur:
+            sql = 'Select * from teacher ' \
+                  f"where name = '{name}' or full_name = '{name}'"
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_bell_by_id(self, id):
+        with self.conn.cursor() as cur:
+            sql = 'Select * from bell ' \
+                  f"where id = {id}"
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+
+class LowDatabaseForAdmin(BaseLowDatabase):
+    def __init__(self):
+        self.conn = psycopg2.connect(host="localhost",   # Тут будет вход под пользователем "Админ"
+                                     port=5432,
+                                     database="University",
+                                     user="postgres",
+                                     password="i183")
+
+    def insert_teacher(self, full_name, name, password):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'insert into teacher(full_name, name, password) ' \
+                      f"values('{full_name}', '{name}','{password}') "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_teacher!')
+            logging.error(err)
+            return False
+
+    def insert_student(self, full_name, password, name,id_spec, course):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'insert into student(full_name, username, password, id_spec, course) ' \
+                      f"values('{full_name}', '{name}','{password}', {id_spec[0]}, {course}) "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_student!')
+            logging.error(err)
+            return False
+
+    def insert_admin(self, password, name, full_name):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "Insert into dean(name,full_name,password) " \
+                      f"values('{name}', '{full_name}', '{password}')"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_dean!')
+            logging.error(err)
+            return False
+
+    def insert_subject(self, subject, teacher):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "Insert into subject(name, teacher_id) " \
+                      f"values('{subject}', '{teacher}')"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_subject!')
+            logging.error(err)
+            return False
+
+
+
+
+class LowDatabaseForTeacher(BaseLowDatabase):
+    def __init__(self):
+        self.conn = psycopg2.connect(host="localhost",   # Тут будет вход под пользователем "Преподаватель"
+                                     port=5432,
+                                     database="University",
+                                     user="postgres",
+                                     password="i183")
+
+
+class LowDatabaseForStudent(BaseLowDatabase):
+    def __init__(self):
+        self.conn = psycopg2.connect(host="localhost",   # Тут будет вход под пользователем "Студент"
+                                     port=5432,
+                                     database="University",
+                                     user="postgres",
+                                     password="i183")
+
+
+class Database:
+    def __init__(self):
+        self.low_db = LowLevelDb()
+
+    def get_speciality_id_by_name(self, name_spec):
+        res = self.low_db.select_spec_id_by_name(name_spec)
+        return res[0]
 
     def get_homework_by_student(self, my_student):
         res = self.low_db.select_homework_by_student(my_student)
@@ -73,24 +332,6 @@ class Database:
         res = self.low_db.delete_teacher_by_name(name)
         return res
 
-    def exist_bell_by_id(self, id):
-        res = self.low_db.get_bell_by_id(id)
-        if res:
-            return True
-        else:
-            return False
-
-    def set_bells(self, id, first_time, second_time):
-        flag = self.exist_bell_by_id(id)
-        if flag:
-            self.low_db.change_bell(id=id,
-                                    first_time=first_time,
-                                    second_time=second_time)
-        else:
-            self.low_db.insert_bell(first_time=first_time,
-                                    second_time=second_time)
-        return True
-
     def get_subjects(self):
         res = self.low_db.select_subjects()
         #################ДОБАВИТЬ ОБРАБОТКУ!!!!
@@ -99,19 +340,6 @@ class Database:
     def get_teachers(self):
         res = self.low_db.select_teachers()
         return res
-
-    def get_id_teacher_by_name(self, name):
-        first_id = self.low_db.select_id_teacher_by_name(name)[0][0]
-        return first_id
-
-    def set_subject(self, subject, teacher):
-        my_id = self.get_id_teacher_by_name(name=teacher)
-        if my_id:
-            self.low_db.insert_subject(subject=subject,
-                                       teacher=my_id)
-            return True
-        else:
-            return {'message': 'Преподаватель введен некорректно'}
 
     def get_user_by_credentionals(self, password, full_name, username):
         students = self.low_db.select_student_by_cred(password=password,
@@ -182,114 +410,9 @@ class LowLevelDb:
             logging.error(err)
             return False
 
-    def select_homework_with_all(self):
-        with self.conn.cursor() as cur:
-            sql = 'select h.status as "Статус задания", s.name as "Название предмета", std.username as "Имя студента", ' \
-                  't.task as "Название задачи", t.addition as "Условие задачи" ' \
-                  'from homework h ' \
-                  'inner join subject s on s.id = h.id_subject ' \
-                  'inner join student std on std.id = h.id_student ' \
-                  'inner join task t on t.id = h.task_id;'
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
-    def get_bell_by_id(self, id):
-        with self.conn.cursor() as cur:
-            sql = 'Select * from bell ' \
-                  f"where id = {id}"
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
-    def select_bells(self):
-        with self.conn.cursor() as cur:
-            sql = 'Select * from bell;'
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
-    def select_deans(self):
-        with self.conn.cursor() as cur:
-            sql = 'Select * from dean d'
-            # 'where d.is_deleted <> TRUE;'
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
-    def insert_dean(self, password, name, full_name):
-        try:
-            with self.conn.cursor() as cur:
-                sql = "Insert into dean(name,full_name,password) " \
-                      f"values('{name}', '{full_name}', '{password}')"
-                cur.execute(sql)
-                self.conn.commit()
-                return True
-        except Exception as err:
-            logging.error('Error into insert_dean!')
-            logging.error(err)
-            return False
-
-    def insert_subject(self, subject, teacher):
-        try:
-            with self.conn.cursor() as cur:
-                sql = "Insert into subject(name, teacher_id) " \
-                      f"values('{subject}', '{teacher}')"
-                cur.execute(sql)
-                self.conn.commit()
-                return True
-        except Exception as err:
-            logging.error('Error into insert_subject!')
-            logging.error(err)
-            return False
-
-    def select_id_teacher_by_name(self, name):
-        with self.conn.cursor() as cur:
-            sql = 'Select * from teacher ' \
-                  f"where name = '{name}' or full_name = '{name}'"
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
-    def select_teachers(self):
-        with self.conn.cursor() as cur:
-            sql = 'Select * from teacher ' \
-                  'where is_deleted <>TRUE '
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
     def select_subjects(self):
         with self.conn.cursor() as cur:
             sql = 'Select * from subject'
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
-    def select_facultyes(self):
-        with self.conn.cursor() as cur:
-            sql = 'Select * from faculty'
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
-    def select_specialization(self):
-        with self.conn.cursor() as cur:
-            sql = 'select s.name, f.name ' \
-                  'from speciality s ' \
-                  'inner join faculty f on f.id = s.id_fac; '
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
-    def select_student(self, names=None):
-        with self.conn.cursor() as cur:
-            if names:
-                sql = 'Select * from student'
-            else:
-                sql = 'select s.username, s.full_name, s.course, spc.name ' \
-                      'from student s ' \
-                      'inner join speciality spc on spc.id = s.id_spec '
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -407,19 +530,6 @@ class LowLevelDb:
             return False
         return query_results
 
-    def insert_student(self, full_name, password, name,id_spec, course):
-        try:
-            with self.conn.cursor() as cur:
-                sql = 'insert into student(full_name, username, password, id_spec, course) ' \
-                      f"values('{full_name}', '{name}','{password}', {id_spec[0]}, {course}) "
-                cur.execute(sql)
-                self.conn.commit()
-                return True
-        except Exception as err:
-            logging.error('Error into insert_student!')
-            logging.error(err)
-            return False
-
     def select_spec_id_by_name(self, name_spec):
         try:
             with self.conn.cursor() as cur:
@@ -432,18 +542,6 @@ class LowLevelDb:
             return False
         return query_results
 
-    def insert_teacher(self, full_name, name, password):
-        try:
-            with self.conn.cursor() as cur:
-                sql = 'insert into teacher(full_name, name, password) ' \
-                      f"values('{full_name}', '{name}','{password}') "
-                cur.execute(sql)
-                self.conn.commit()
-                return True
-        except Exception as err:
-            logging.error('Error into insert_teacher!')
-            logging.error(err)
-            return False
 
 
 def main():
