@@ -9,7 +9,7 @@ class BaseDatabase:
 
     def get_students(self):
         raw_res = self.low_db.select_student()
-        res = raw_res # Тут будет обработка
+        res = raw_res  # Тут будет обработка
         return res
 
     def get_teachers(self):
@@ -56,6 +56,11 @@ class BaseDatabase:
         else:
             return False
 
+    def get_subject(self):
+        raw_res = self.low_db.select_subject()
+        res = raw_res
+        return res
+
 
 class DatabaseForAdmin(BaseDatabase):
 
@@ -68,7 +73,7 @@ class DatabaseForAdmin(BaseDatabase):
                                    name=name,
                                    password=password)
 
-    def save_student(self, full_name, password,name, id_spec, course):
+    def save_student(self, full_name, password, name, id_spec, course):
         self.low_db.insert_student(full_name=full_name,
                                    password=password,
                                    name=name,
@@ -77,8 +82,8 @@ class DatabaseForAdmin(BaseDatabase):
 
     def save_admin(self, name, password):
         res = self.low_db.insert_admin(name=name,
-                                      password=password,
-                                      full_name='')
+                                       password=password,
+                                       full_name='')
         return res
 
     def save_subject(self, subject, teacher):
@@ -90,16 +95,27 @@ class DatabaseForAdmin(BaseDatabase):
         else:
             return {'message': 'Преподаватель введен некорректно'}
 
-    def save_bells(self, id, first_time, second_time):
+    def save_bell(self, id, first_time, second_time):
         flag = self.exist_bell_by_id(id)
         if flag:
-            self.low_db.change_bell(id=id,
+            self.low_db.update_bell(id=id,
                                     first_time=first_time,
                                     second_time=second_time)
         else:
             self.low_db.insert_bell(first_time=first_time,
                                     second_time=second_time)
         return True
+
+    def save_faculty(self, name):
+        res = self.low_db.insert_faculty(name)
+        return res
+
+    def save_specialization(self, name_spec, name_fac):
+        fac_id = self.low_db.select_id_fac_by_name(name_fac)
+        res = self.low_db.insert_specialization(name=name_spec,
+                                                id=fac_id)
+        return res
+
 
 class DatabaseForTeacher(BaseDatabase):
     def __init__(self):
@@ -113,7 +129,7 @@ class DatabaseForStudent(BaseDatabase):
 
 class BaseLowDatabase:
     def __init__(self):
-        self.conn = psycopg2.connect(host="localhost",   # Стандартный вход под дефолтным пользователем постгреса
+        self.conn = psycopg2.connect(host="localhost",  # Стандартный вход под дефолтным пользователем постгреса
                                      port=5432,
                                      database="University",
                                      user="postgres",
@@ -130,7 +146,7 @@ class BaseLowDatabase:
     def select_admins(self):
         with self.conn.cursor() as cur:
             sql = 'Select * from dean d' \
-             'where d.is_deleted <> TRUE;'
+                  'where d.is_deleted <> TRUE;'
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -198,10 +214,25 @@ class BaseLowDatabase:
             query_results = cur.fetchall()
             return query_results
 
+    def select_subject(self):
+        with self.conn.cursor() as cur:
+            sql = 'Select * from subject'
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_id_fac_by_name(self, name_fac):
+        with self.conn.cursor() as cur:
+            sql = 'Select f.id from facultyes f' \
+                  f'where f.name = "{name_fac}";'
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
 
 class LowDatabaseForAdmin(BaseLowDatabase):
     def __init__(self):
-        self.conn = psycopg2.connect(host="localhost",   # Тут будет вход под пользователем "Админ"
+        self.conn = psycopg2.connect(host="localhost",  # Тут будет вход под пользователем "Админ"
                                      port=5432,
                                      database="University",
                                      user="postgres",
@@ -220,7 +251,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error(err)
             return False
 
-    def insert_student(self, full_name, password, name,id_spec, course):
+    def insert_student(self, full_name, password, name, id_spec, course):
         try:
             with self.conn.cursor() as cur:
                 sql = 'insert into student(full_name, username, password, id_spec, course) ' \
@@ -259,12 +290,67 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error(err)
             return False
 
+    def update_bell(self, id, first_time, second_time):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"update bell set begin_time = '{first_time}' " \
+                      f"where id = {id}"
+                cur.execute(sql)
+                self.conn.commit()
 
+                sql = f"update bell set end_time = '{second_time}' " \
+                      f"where id = {id}"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into update_bell!')
+            logging.error(err)
+            return False
+
+    def insert_bell(self, first_time, second_time):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'insert into bell(begin_time, end_time)' \
+                      f"values('{first_time}', '{second_time}') "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_bell!')
+            logging.error(err)
+            return False
+
+    def insert_faculty(self, name):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'insert into faculty(name)' \
+                      f"values('{name}');"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_faculty!')
+            logging.error(err)
+            return False
+
+    def insert_specialization(self, name, id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "Insert into specialization(name,id_fac) " \
+                      f"values('{name}','{id}')"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_specialization!')
+            logging.error(err)
+            return False
 
 
 class LowDatabaseForTeacher(BaseLowDatabase):
     def __init__(self):
-        self.conn = psycopg2.connect(host="localhost",   # Тут будет вход под пользователем "Преподаватель"
+        self.conn = psycopg2.connect(host="localhost",  # Тут будет вход под пользователем "Преподаватель"
                                      port=5432,
                                      database="University",
                                      user="postgres",
@@ -273,7 +359,7 @@ class LowDatabaseForTeacher(BaseLowDatabase):
 
 class LowDatabaseForStudent(BaseLowDatabase):
     def __init__(self):
-        self.conn = psycopg2.connect(host="localhost",   # Тут будет вход под пользователем "Студент"
+        self.conn = psycopg2.connect(host="localhost",  # Тут будет вход под пользователем "Студент"
                                      port=5432,
                                      database="University",
                                      user="postgres",
@@ -410,13 +496,6 @@ class LowLevelDb:
             logging.error(err)
             return False
 
-    def select_subjects(self):
-        with self.conn.cursor() as cur:
-            sql = 'Select * from subject'
-            cur.execute(sql)
-            query_results = cur.fetchall()
-            return query_results
-
     def select_student_by_cred(self, name, full_name, password):
         try:
             with self.conn.cursor() as cur:
@@ -455,37 +534,6 @@ class LowLevelDb:
             logging.error(err)
             return False
         return query_results
-
-    def change_bell(self, id, first_time, second_time):
-        try:
-            with self.conn.cursor() as cur:
-                sql = f"update bell set begin_time = '{first_time}' " \
-                      f"where id = {id}"
-                cur.execute(sql)
-                self.conn.commit()
-
-                sql = f"update bell set end_time = '{second_time}' " \
-                      f"where id = {id}"
-                cur.execute(sql)
-                self.conn.commit()
-                return True
-        except Exception as err:
-            logging.error('Error into change_bell!')
-            logging.error(err)
-            return False
-
-    def insert_bell(self, first_time, second_time):
-        try:
-            with self.conn.cursor() as cur:
-                sql = 'insert into bell(begin_time, end_time)' \
-                      f"values('{first_time}', '{second_time}') "
-                cur.execute(sql)
-                self.conn.commit()
-                return True
-        except Exception as err:
-            logging.error('Error into insert_bell!')
-            logging.error(err)
-            return False
 
     def select_bells_by_id(self, my_id):
         try:
@@ -541,7 +589,6 @@ class LowLevelDb:
             logging.error(err)
             return False
         return query_results
-
 
 
 def main():
