@@ -67,12 +67,32 @@ class BaseDatabase:
         #res = ', '.join(res)
         return 1
 
+    def get_user_by_credentionals(self, password, full_name, username):
+        students = self.low_db.select_student_by_cred(password=password,
+                                                      full_name=full_name,
+                                                      name=username)
+        deans = self.low_db.select_admin_by_cred(password=password,
+                                                full_name=full_name,
+                                                name=username)
+        teacher = self.low_db.select_teacher_by_cred(password=password,
+                                                     full_name=full_name,
+                                                     name=username)
+        print(students)
+        print(deans)
+        print(teacher)
+        if students:
+            return list(students[0]), 'student'
+        elif deans:
+            return list(deans[0]), 'dean'
+        elif teacher:
+            return list(teacher[0]), 'teacher'
+        else:
+            return False, False
 
 class DatabaseForAdmin(BaseDatabase):
 
     def __init__(self):
         self.low_db = LowDatabaseForAdmin()
-        super().__init__()
 
     def save_teacher(self, full_name, name, password):
         self.low_db.insert_teacher(full_name=full_name,
@@ -86,10 +106,10 @@ class DatabaseForAdmin(BaseDatabase):
                                    id_spec=id_spec,
                                    course=course)
 
-    def save_admin(self, name, password):
+    def save_admin(self, name, password, full_name):
         res = self.low_db.insert_admin(name=name,
                                        password=password,
-                                       full_name='')
+                                       full_name=full_name)
         return res
 
     def save_subject(self, subject, teacher):
@@ -235,6 +255,46 @@ class BaseLowDatabase:
             query_results = cur.fetchall()
             return query_results
 
+    def select_teacher_by_cred(self, name, full_name, password):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'Select * from teacher ' \
+                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}'"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_teacher_by_cred')
+            logging.error(err)
+            return False
+        return query_results
+
+    def select_student_by_cred(self, name, full_name, password):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'Select * from student ' \
+                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}'"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_student_by_cred')
+            logging.error(err)
+            return False
+        return query_results
+
+
+    def select_admin_by_cred(self, name, full_name, password):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'Select * from admin ' \
+                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}'"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_admin_by_cred')
+            logging.error(err)
+            return False
+        return query_results
+
 
 class LowDatabaseForAdmin(BaseLowDatabase):
     def __init__(self):
@@ -244,11 +304,11 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                                      user="postgres",
                                      password="i183")
 
-    def insert_teacher(self, full_name, name, password):
+    def insert_teacher(self, full_name, name, password, is_delete=False):
         try:
             with self.conn.cursor() as cur:
-                sql = 'insert into teacher(full_name, name, password) ' \
-                      f"values('{full_name}', '{name}','{password}') "
+                sql = 'insert into teacher(full_name, name, password, is_delete) ' \
+                      f"values('{full_name}', '{name}','{password}', '{is_delete}') "
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -257,11 +317,11 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error(err)
             return False
 
-    def insert_student(self, full_name, password, name, id_spec, course):
+    def insert_student(self, full_name, password, name, id_spec, course, is_delete=False):
         try:
             with self.conn.cursor() as cur:
-                sql = 'insert into student(full_name, username, password, id_spec, course) ' \
-                      f"values('{full_name}', '{name}','{password}', {id_spec[0]}, {course}) "
+                sql = 'insert into student(full_name, username, password, id_spec, course, is_delete) ' \
+                      f"values('{full_name}', '{name}','{password}', {id_spec[0]}, {course}, '{is_delete}') "
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -270,24 +330,24 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error(err)
             return False
 
-    def insert_admin(self, password, name, full_name):
+    def insert_admin(self, password, name, full_name, is_delete=False):
         try:
             with self.conn.cursor() as cur:
-                sql = "Insert into dean(name,full_name,password) " \
-                      f"values('{name}', '{full_name}', '{password}')"
+                sql = "Insert into admin(name,full_name,password, is_delete) " \
+                      f"values('{name}', '{full_name}', '{password}', '{is_delete}' )"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
         except Exception as err:
-            logging.error('Error into insert_dean!')
+            logging.error('Error into insert_admin!')
             logging.error(err)
             return False
 
-    def insert_subject(self, subject, teacher):
+    def insert_subject(self, subject, teacher, is_delete=False):
         try:
             with self.conn.cursor() as cur:
-                sql = "Insert into subject(name, teacher_id) " \
-                      f"values('{subject}', '{teacher}')"
+                sql = "Insert into subject(name, teacher_id, is_delete) " \
+                      f"values('{subject}', '{teacher}', '{is_delete}')"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -327,11 +387,11 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error(err)
             return False
 
-    def insert_faculty(self, name):
+    def insert_faculty(self, name, is_delete=False):
         try:
             with self.conn.cursor() as cur:
-                sql = 'insert into faculty(name)' \
-                      f"values('{name}');"
+                sql = 'insert into faculty(name, is_delete)' \
+                      f"values('{name}', '{is_delete}');"
                 cur.execute(sql)
                 self.conn.commit()
                 return True

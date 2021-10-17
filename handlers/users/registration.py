@@ -58,9 +58,9 @@ async def register_teacher(call: CallbackQuery, callback_data: dict):
 @dp.callback_query_handler(type_callback.filter(type='Dean'))
 async def register_dean(call: CallbackQuery, callback_data: dict):
     await call.answer(cache_time=60)
-    await call.message.answer('Ваш профиль будет сохранен как профиль декана!')
+    await call.message.answer('Ваш профиль будет сохранен как профиль админа!')
     print(callback_data)
-    db.save_dean(password=call.from_user.id,
+    db.save_admin(password=call.from_user.id,
                  full_name=call.from_user.full_name,
                  name=call.from_user.username)
     await call.message.answer('Чтобы узнать, какие команды вам доступны, вбейте команду "/help"')
