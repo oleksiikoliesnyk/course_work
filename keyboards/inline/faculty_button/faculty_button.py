@@ -1,8 +1,8 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from loader import db
+from loader import db_admin as db
 from aiogram.utils.callback_data import CallbackData
 
-my_fac = db.get_facultyes().split(', ')
+my_fac = db.get_faculty().split(', ')
 
 inline_keyboard_list = list()
 my_callback = CallbackData('fac', 'fac')

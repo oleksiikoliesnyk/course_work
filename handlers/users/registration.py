@@ -7,7 +7,7 @@ from data.global_conf import my_global_dict
 from keyboards.inline.faculty_button.faculty_button import fac_choice
 from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
-from loader import db, dp
+from loader import dp, db_admin as db
 from states.Dean import DeanState
 from states.Student import StudentState
 from utils.db_api.test_postgtes import query_results

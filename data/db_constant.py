@@ -1,5 +1,5 @@
-from loader import db
+from loader import db_admin as db
 
-facultys = db.get_facultyes()
-specialization = db.get_specialization()
-students_names = db.get_student_names()
+facultys = db.get_faculty()
+specialization = db.get_speciality()
+#students_names = db.get_student_names()

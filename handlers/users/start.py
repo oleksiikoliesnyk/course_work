@@ -6,7 +6,7 @@ from data.db_constant import facultys
 from keyboards.inline.faculty_button.faculty_button import fac_choice
 from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
-from loader import db, dp
+from loader import dp, db_admin as db
 from utils.db_api.test_postgtes import query_results
 
 
@@ -18,7 +18,7 @@ async def bot_start(message: types.Message):
 @dp.callback_query_handler(type_callback.filter(type='Student'))
 async def what_faculty(call: CallbackQuery, callback_data: dict):
     await call.answer(cache_time=60)
-    my_facultys = db.get_facultyes()
+    my_facultys = db.get_faculty()
     res_string = f'Вот список факультетов: {my_facultys}\n Напишите, с какого вы?'
     await call.message.answer(res_string, reply_markup=fac_choice)
 

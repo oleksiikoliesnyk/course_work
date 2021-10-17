@@ -6,7 +6,7 @@ from data.db_constant import facultys
 from keyboards.inline.faculty_button.faculty_button import fac_choice
 from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
-from loader import db, dp
+from loader import dp, db_admin as db
 from states.Dean import DeanState
 
 

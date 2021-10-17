@@ -33,7 +33,7 @@ class BaseDatabase:
     def get_faculty(self):
         raw_res = self.low_db.select_facultyes()
         res = raw_res  # Тут будет обработка
-        return res
+        return '1, 2, 3'
 
     def get_speciality(self):
         raw_res = self.low_db.select_specialization()
@@ -60,6 +60,12 @@ class BaseDatabase:
         raw_res = self.low_db.select_subject()
         res = raw_res
         return res
+
+    def get_student_names(self):
+        #raw_res = self.low_db.select_student(names=True)
+        #res = [i[1] for i in raw_res]
+        #res = ', '.join(res)
+        return 1
 
 
 class DatabaseForAdmin(BaseDatabase):
@@ -455,24 +461,25 @@ class Database:
                                 password=password)
 
     def get_facultyes(self):
-        raw_res = self.low_db.select_facultyes()
-        print(raw_res[0][1])
-        res = [i[1] for i in raw_res]
-        res = ', '.join(res)
+        res = 'a, b, c'
+        #raw_res = self.low_db.select_facultyes()
+        #print(raw_res[0][1])
+        #res = [i[1] for i in raw_res]
+        #res = ', '.join(res)
         return res
 
     def get_specialization(self):
-        raw_res = self.low_db.select_specialization()
-        print(raw_res)
-        res = [i[1] for i in raw_res]
-        res = ', '.join(res)
-        return res
+        #raw_res = self.low_db.select_specialization()
+        #print(raw_res)
+        #res = [i[1] for i in raw_res]
+        #res = ', '.join(res)
+        return 1
 
     def get_student_names(self):
-        raw_res = self.low_db.select_student(names=True)
-        res = [i[1] for i in raw_res]
-        res = ', '.join(res)
-        return res
+        #raw_res = self.low_db.select_student(names=True)
+        #res = [i[1] for i in raw_res]
+        #res = ', '.join(res)
+        return 1
 
 
 class LowLevelDb:
@@ -500,7 +507,7 @@ class LowLevelDb:
         try:
             with self.conn.cursor() as cur:
                 sql = 'Select * from student ' \
-                      f"where username = '{name}' and full_name = '{full_name}' and password = '{password}'"
+                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}'"
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
@@ -589,6 +596,15 @@ class LowLevelDb:
             logging.error(err)
             return False
         return query_results
+
+    def select_facultyes(self):
+        pass
+
+    def select_specialization(self):
+        pass
+
+    def select_student(self, names):
+        pass
 
 
 def main():

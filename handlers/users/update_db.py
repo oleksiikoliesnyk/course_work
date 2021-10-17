@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Command
 from aiogram.utils.markdown import hcode
 
-from loader import dp, db
+from loader import dp, db_admin as db
 
 
 @dp.message_handler(Command("username"))

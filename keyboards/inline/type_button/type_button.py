@@ -14,7 +14,7 @@ type_choice = InlineKeyboardMarkup(row_width=2,
                                                callback_data=type_callback.new(type='Teacher')
                                            ),
                                            InlineKeyboardButton(
-                                               text='Декан',
+                                               text='Админ',
                                                callback_data=type_callback.new(type='Dean')
                                            )
                                        ]

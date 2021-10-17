@@ -2,7 +2,7 @@ import logging
 
 from aiogram import executor
 
-from loader import dp, db
+from loader import dp
 import middlewares, filters, handlers
 from utils.notify_admins import on_startup_notify
 
