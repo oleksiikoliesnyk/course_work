@@ -8,8 +8,15 @@ class BaseDatabase:
         self.low_db = BaseLowDatabase()
 
     def get_students(self):
-        raw_res = self.low_db.select_student()
-        res = raw_res  # Тут будет обработка
+        students = self.low_db.select_student()
+        res = []
+        for student in students:
+            res_string = f'Ник студента: {student[0]}, \n' \
+                         f'Полное имя студента: {student[1]}, \n' \
+                         f'Курс студента: {student[2]}, \n' \
+                         f'Специальность студента: {student[3]}, \n'
+            res.append(res_string)
+        #res = raw_res  # Тут будет обработка
         return res
 
     def get_teachers(self):
@@ -205,7 +212,7 @@ class BaseLowDatabase:
             if names:
                 sql = 'Select * from student'
             else:
-                sql = 'select s.username, s.full_name, s.course, spc.name ' \
+                sql = 'select s.name, s.full_name, s.course, spc.name ' \
                       'from student s ' \
                       'inner join speciality spc on spc.id = s.id_spec '
             cur.execute(sql)

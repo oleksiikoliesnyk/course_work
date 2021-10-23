@@ -186,7 +186,8 @@ async def see_student(message: types.Message, state: FSMContext):
     await message.answer('Выводим всех студентов...')
     res = db.get_students()
     logging.warning(f'Получен ответ от модуля db. res = {res}')
-    await message.answer(res)
+    for r in res:
+        await message.answer(r)
     logging.warning('Конец функции see_student')
 
 
