@@ -19,8 +19,21 @@ class BaseDatabase:
         return res
 
     def get_teachers(self):
-        raw_res = self.low_db.select_teachers()
-        res = raw_res  # Тут будет обработка
+        teachers = self.low_db.select_teachers()
+        res = list()
+        for teacher in teachers:
+            print(teacher[0])
+            print(teacher[1])
+            print(teacher[2])
+            if teacher[2]:
+                res_string = f'Ник преподавателя: {teacher[0]} \n' \
+                            f'Полное имя преподавателя: {teacher[1]} \n' \
+                            f'Специальности, на которых читает: {teacher[2]}'
+            else:
+                res_string = f'Ник преподавателя: {teacher[0]} \n' \
+                            f'Полное имя преподавателя: {teacher[1]} \n' \
+                             f'Не читает ни на каких специальностях'
+            res.append(res_string)
         return res
 
     def get_admins(self):
@@ -192,10 +205,13 @@ class BaseLowDatabase:
 
     def select_teachers(self):
         with self.conn.cursor() as cur:
-            sql = 'Select * from teacher ' \
-                  'where is_deleted <>TRUE '
+            sql = 'Select t.name, t.full_name, spc.name from teacher t ' \
+                  'left join specialitytoteacher stt on stt.id_teacher = t.id ' \
+                  'left join speciality spc on spc.id = stt.id_speciality ' \
+                  'where t.is_delete <>TRUE '
             cur.execute(sql)
             query_results = cur.fetchall()
+            print(query_results)
             return query_results
 
     def select_admins(self):

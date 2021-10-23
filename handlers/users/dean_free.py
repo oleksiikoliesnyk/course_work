@@ -232,7 +232,7 @@ async def see_subject(message: types.Message, state: FSMContext):
     res = db.get_subjects()
     logging.warning(f'Получен ответ от модуля db. res = {res}')
     await message.answer(res)
-    logging.warning('Конец функции see_student')
+    logging.warning('Конец функции see_subject')
 
 
 @dp.message_handler(Command('see_teacher'), state=DeanState.FreeState)
@@ -241,8 +241,9 @@ async def see_teacher(message: types.Message, state: FSMContext):
     await message.answer('Выводим всех преподавателей...')
     res = db.get_teachers()
     logging.warning(f'Получен ответ от модуля db. res = {res}')
-    await message.answer(res)
-    logging.warning('Конец функции see_subject')
+    for r in res:
+        await message.answer(r)
+    logging.warning('Конец функции see_teacher')
 
 
 @dp.message_handler(Command('see_specific_bell'), state=DeanState.FreeState)
