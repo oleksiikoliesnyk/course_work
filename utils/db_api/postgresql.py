@@ -16,7 +16,6 @@ class BaseDatabase:
                          f'Курс студента: {student[2]}, \n' \
                          f'Специальность студента: {student[3]}, \n'
             res.append(res_string)
-        #res = raw_res  # Тут будет обработка
         return res
 
     def get_teachers(self):
@@ -74,6 +73,14 @@ class BaseDatabase:
         #res = ', '.join(res)
         return 1
 
+    def get_specialization_by_name(self, name):
+        print(f'name = {name}')
+        res_id = self.low_db.select_id_spec_by_name(name)
+        print(res_id)
+        res_id = res_id[0][0]
+        print(res_id)
+        return res_id
+
     def get_user_by_credentionals(self, password, full_name, username):
         students = self.low_db.select_student_by_cred(password=password,
                                                       full_name=full_name,
@@ -107,11 +114,12 @@ class DatabaseForAdmin(BaseDatabase):
                                    password=password)
 
     def save_student(self, full_name, password, name, id_spec, course):
-        self.low_db.insert_student(full_name=full_name,
+        res = self.low_db.insert_student(full_name=full_name,
                                    password=password,
                                    name=name,
                                    id_spec=id_spec,
                                    course=course)
+        return res
 
     def save_admin(self, name, password, full_name):
         res = self.low_db.insert_admin(name=name,
@@ -288,7 +296,6 @@ class BaseLowDatabase:
             return False
         return query_results
 
-
     def select_admin_by_cred(self, name, full_name, password):
         try:
             with self.conn.cursor() as cur:
@@ -301,6 +308,22 @@ class BaseLowDatabase:
             logging.error(err)
             return False
         return query_results
+
+    def select_id_student_by_name(self, name):
+        with self.conn.cursor() as cur:
+            sql = 'Select s.id from student s ' \
+                  f"where name = '{name}' or full_name = '{name}'"
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_id_spec_by_name(self, name):
+        with self.conn.cursor() as cur:
+            sql = 'Select s.id from speciality s ' \
+                  f"where name = '{name}'"
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
 
 
 class LowDatabaseForAdmin(BaseLowDatabase):
@@ -327,8 +350,8 @@ class LowDatabaseForAdmin(BaseLowDatabase):
     def insert_student(self, full_name, password, name, id_spec, course, is_delete=False):
         try:
             with self.conn.cursor() as cur:
-                sql = 'insert into student(full_name, username, password, id_spec, course, is_delete) ' \
-                      f"values('{full_name}', '{name}','{password}', {id_spec[0]}, {course}, '{is_delete}') "
+                sql = 'insert into student(full_name, name, password, id_spec, course, is_delete) ' \
+                      f"values('{full_name}', '{name}','{password}', {id_spec}, {course}, '{is_delete}') "
                 cur.execute(sql)
                 self.conn.commit()
                 return True

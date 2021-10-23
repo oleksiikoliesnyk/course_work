@@ -368,24 +368,41 @@ async def set_new_student_third(message: types.Message, state: FSMContext):
 @dp.message_handler(state=DeanState.SetStudentThird)
 async def set_new_student_third(message: types.Message, state: FSMContext):
     my_global_dict['course_new_student'] = message.text
-    await message.answer('Введите курс студента')
+    await message.answer('Введите специальность студента')
     await DeanState.SetStudentFourth.set()
 
 
 @dp.message_handler(state=DeanState.SetStudentFourth)
-async def set_new_student_third(message: types.Message, state: FSMContext):
-    name_spec = message.text
+async def set_full_name_of_student(message: types.Message, state: FSMContext):
+    my_global_dict['name_spec_student'] = message.text
+
     try:
-        id_spec = db.get_specialization_by_name(name_spec)
+        id_spec = db.get_specialization_by_name(my_global_dict['name_spec_student'])
         my_global_dict['spec_new_student'] = id_spec
     except Exception as err:
         await message.answer(f'Ошибка - {err}')
         await message.answer('Скорее всего, вы неверно ввели название специальности')
+
+    await message.answer('Введите полное имя студента')
+    await DeanState.SetStudentFifth.set()
+
+
+@dp.message_handler(state=DeanState.SetStudentFifth)
+async def set_new_student_third(message: types.Message, state: FSMContext):
+    full_name = message.text
     try:
-        res = db.set_new_student(name=my_global_dict['name_new_student'],
-                                 password=my_global_dict['password_new_student'],
-                                 course=my_global_dict['course_new_student'],
-                                 spec=my_global_dict['spec_new_student'])
+        print_string = f"name = {my_global_dict['name_new_student']}, " \
+                             f" 'full_name = {full_name}, " \
+                             f" password = {my_global_dict['password_new_student']}, " \
+                             f" course = {my_global_dict['course_new_student']}, " \
+                             f" id_spec = {my_global_dict['spec_new_student']}' "
+        print(print_string)
+
+        res = db.save_student(name=my_global_dict['name_new_student'],
+                              full_name=full_name,
+                              password=my_global_dict['password_new_student'],
+                              course=my_global_dict['course_new_student'],
+                              id_spec=my_global_dict['spec_new_student'])
         if res:
             await message.answer('Студент успешно создан')
         else:
