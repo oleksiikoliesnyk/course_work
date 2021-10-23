@@ -24,6 +24,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/set_bells - Изменить расписание звонков',
         '/help - Получить справку',
         '/delete_teacher - Удалить преподавателя',
+        '/delete_student - Удалить студента'
         '/see_bells - Просмотреть расписание звонков',
         '/see_deans - Просмотреть список деканов',
         '/see_faculty - Просмотреть список факультетов',
@@ -64,6 +65,39 @@ async def add_subject(message: types.Message, state: FSMContext):
         await message.answer('Вероятнее всего вы не указали аргументы - имя преподавателя и название предмета'
                              'через пробел')
     logging.warning('Конец функции add_subject')
+
+
+@dp.message_handler(Command('delete_student'), state=DeanState.FreeState)
+async def delete_student_first(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции delete_student')
+    await message.answer('Введите имя студента, которого вы хотите удалить')
+    await DeanState.DeleteStudent.set()
+
+
+@dp.message_handler(state=DeanState.DeleteStudent)
+async def delete_student_second(message: types.Message, state: FSMContext):
+    student_name = message.text
+    logging.warning(f'Имя студента = {student_name}')
+    logging.warning(f'Получаю id по имени')
+    try:
+        id_student = db.get_student_id_by_name(name=student_name)
+        if not id_student:
+            await message.answer('Имя студента задано неправильно, введите команду еще раз')
+            await DeanState.FreeState.set()
+            raise ValueError('Неверно задано имя')
+        logging.warning(f'id получено = {id_student}')
+        logging.warning(f'Начинаем удалять...')
+        res = db.delete_student(id=id_student)
+        logging.warning(f'Функция базы отработала. Результат = {res}')
+        if res:
+            await message.answer('Студент успешно удален.')
+            await DeanState.FreeState.set()
+        else:
+            await message.answer('Не удалось удалить студента.')
+    except Exception as err:
+        await message.answer('Не удалось удалить студента.')
+        await message.answer(f'Ошибка = {err}.')
+    logging.warning('Конец функции delete_student')
 
 
 @dp.message_handler(Command('set_bells'), state=DeanState.FreeState)
@@ -392,10 +426,10 @@ async def set_new_student_third(message: types.Message, state: FSMContext):
     full_name = message.text
     try:
         print_string = f"name = {my_global_dict['name_new_student']}, " \
-                             f" 'full_name = {full_name}, " \
-                             f" password = {my_global_dict['password_new_student']}, " \
-                             f" course = {my_global_dict['course_new_student']}, " \
-                             f" id_spec = {my_global_dict['spec_new_student']}' "
+                       f" 'full_name = {full_name}, " \
+                       f" password = {my_global_dict['password_new_student']}, " \
+                       f" course = {my_global_dict['course_new_student']}, " \
+                       f" id_spec = {my_global_dict['spec_new_student']}' "
         print(print_string)
 
         res = db.save_student(name=my_global_dict['name_new_student'],

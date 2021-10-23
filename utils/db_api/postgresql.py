@@ -81,6 +81,16 @@ class BaseDatabase:
         print(res_id)
         return res_id
 
+    def get_student_id_by_name(self, name):
+        res = self.low_db.select_id_student_by_name(name)
+        print(res)
+        if res:
+            id_res = res[0][0]
+            print(id_res)
+            return id_res
+        else:
+            return False
+
     def get_user_by_credentionals(self, password, full_name, username):
         students = self.low_db.select_student_by_cred(password=password,
                                                       full_name=full_name,
@@ -155,6 +165,10 @@ class DatabaseForAdmin(BaseDatabase):
         fac_id = self.low_db.select_id_fac_by_name(name_fac)
         res = self.low_db.insert_specialization(name=name_spec,
                                                 id=fac_id)
+        return res
+
+    def delete_student(self, id):
+        res = self.low_db.delete_student(id)
         return res
 
 
@@ -440,6 +454,19 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                 return True
         except Exception as err:
             logging.error('Error into insert_specialization!')
+            logging.error(err)
+            return False
+
+    def delete_student(self, id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "delete from student " \
+                      f"where id = {id}"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete_student!')
             logging.error(err)
             return False
 
