@@ -205,10 +205,12 @@ class BaseLowDatabase:
 
     def select_teachers(self):
         with self.conn.cursor() as cur:
-            sql = 'Select t.name, t.full_name, spc.name from teacher t ' \
+            sql = "Select t.name, t.full_name, string_agg(spc.name, ', ') " \
+                  'from teacher t ' \
                   'left join specialitytoteacher stt on stt.id_teacher = t.id ' \
                   'left join speciality spc on spc.id = stt.id_speciality ' \
-                  'where t.is_delete <>TRUE '
+                  'where t.is_delete <>TRUE ' \
+                  'group by t.name, t.full_name;'
             cur.execute(sql)
             query_results = cur.fetchall()
             print(query_results)
