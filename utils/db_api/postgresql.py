@@ -27,11 +27,11 @@ class BaseDatabase:
             print(teacher[2])
             if teacher[2]:
                 res_string = f'Ник преподавателя: {teacher[0]} \n' \
-                            f'Полное имя преподавателя: {teacher[1]} \n' \
-                            f'Специальности, на которых читает: {teacher[2]}'
+                             f'Полное имя преподавателя: {teacher[1]} \n' \
+                             f'Специальности, на которых читает: {teacher[2]}'
             else:
                 res_string = f'Ник преподавателя: {teacher[0]} \n' \
-                            f'Полное имя преподавателя: {teacher[1]} \n' \
+                             f'Полное имя преподавателя: {teacher[1]} \n' \
                              f'Не читает ни на каких специальностях'
             res.append(res_string)
         return res
@@ -81,9 +81,9 @@ class BaseDatabase:
         return res
 
     def get_student_names(self):
-        #raw_res = self.low_db.select_student(names=True)
-        #res = [i[1] for i in raw_res]
-        #res = ', '.join(res)
+        # raw_res = self.low_db.select_student(names=True)
+        # res = [i[1] for i in raw_res]
+        # res = ', '.join(res)
         return 1
 
     def get_specialization_by_name(self, name):
@@ -109,8 +109,8 @@ class BaseDatabase:
                                                       full_name=full_name,
                                                       name=username)
         deans = self.low_db.select_admin_by_cred(password=password,
-                                                full_name=full_name,
-                                                name=username)
+                                                 full_name=full_name,
+                                                 name=username)
         teacher = self.low_db.select_teacher_by_cred(password=password,
                                                      full_name=full_name,
                                                      name=username)
@@ -126,22 +126,24 @@ class BaseDatabase:
         else:
             return False, False
 
+
 class DatabaseForAdmin(BaseDatabase):
 
     def __init__(self):
         self.low_db = LowDatabaseForAdmin()
 
     def save_teacher(self, full_name, name, password):
-        self.low_db.insert_teacher(full_name=full_name,
-                                   name=name,
-                                   password=password)
+        res = self.low_db.insert_teacher(full_name=full_name,
+                                         name=name,
+                                         password=password)
+        return res
 
     def save_student(self, full_name, password, name, id_spec, course):
         res = self.low_db.insert_student(full_name=full_name,
-                                   password=password,
-                                   name=name,
-                                   id_spec=id_spec,
-                                   course=course)
+                                         password=password,
+                                         name=name,
+                                         id_spec=id_spec,
+                                         course=course)
         return res
 
     def save_admin(self, name, password, full_name):
@@ -597,23 +599,23 @@ class Database:
 
     def get_facultyes(self):
         res = 'a, b, c'
-        #raw_res = self.low_db.select_facultyes()
-        #print(raw_res[0][1])
-        #res = [i[1] for i in raw_res]
-        #res = ', '.join(res)
+        # raw_res = self.low_db.select_facultyes()
+        # print(raw_res[0][1])
+        # res = [i[1] for i in raw_res]
+        # res = ', '.join(res)
         return res
 
     def get_specialization(self):
-        #raw_res = self.low_db.select_specialization()
-        #print(raw_res)
-        #res = [i[1] for i in raw_res]
-        #res = ', '.join(res)
+        # raw_res = self.low_db.select_specialization()
+        # print(raw_res)
+        # res = [i[1] for i in raw_res]
+        # res = ', '.join(res)
         return 1
 
     def get_student_names(self):
-        #raw_res = self.low_db.select_student(names=True)
-        #res = [i[1] for i in raw_res]
-        #res = ', '.join(res)
+        # raw_res = self.low_db.select_student(names=True)
+        # res = [i[1] for i in raw_res]
+        # res = ', '.join(res)
         return 1
 
 

@@ -21,6 +21,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
     text = [
         'Список команд: ',
         '/add_subject {ИмяПреподавателя} {НазваниеПредмета} - Добавить преподавателю новый предмет',
+        '/add_speciality_for_teacher - Добавить преподавателя на новую специальность'
         '/set_bells - Изменить расписание звонков',
         '/help - Получить справку',
         '/delete_teacher - Удалить преподавателя',
@@ -36,7 +37,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/see_specific_bell - Просмотреть время начала и конца конкретной пары',
         '/see_faculty_by_speciality - Посмотреть, к какому факультету относится какая специальность',
         '/see_homework_by_student - Посмотреть домашнее задание конкретного студента',
-        '/set_new_dean - Добавить нового декана',
+        '/set_new_admin - Добавить нового админа',
         '/set_new_fac - Добавить новый факультет',
         '/set_new_spec - Добавить новую специальность',
         '/set_student - Добавить нового студента',
@@ -449,24 +450,32 @@ async def set_new_student_third(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(Command('set_teacher'), state=DeanState.FreeState)
-async def set_new_student_first(message: types.Message, state: FSMContext):
+async def set_new_teacher_first(message: types.Message, state: FSMContext):
     await message.answer('Введите имя преподавателя')
     await DeanState.SetTeacherFirst.set()
 
 
 @dp.message_handler(state=DeanState.SetTeacherFirst)
-async def set_new_student_third(message: types.Message, state: FSMContext):
+async def set_new_teacher_second(message: types.Message, state: FSMContext):
     my_global_dict['name_new_teacher'] = message.text
     await message.answer('Введите пароль нового преподавателя')
     await DeanState.SetTeacherSecond.set()
 
 
 @dp.message_handler(state=DeanState.SetTeacherSecond)
-async def set_new_student_third(message: types.Message, state: FSMContext):
-    password = message.text
+async def set_new_teacher_third(message: types.Message, state: FSMContext):
+    my_global_dict['password_new_teacher'] = message.text
+    await message.answer('Введите полное имя нового преподавателя')
+    await DeanState.SetTeacherThird.set()
+
+
+@dp.message_handler(state=DeanState.SetTeacherThird)
+async def set_new_teacher_third(message: types.Message, state: FSMContext):
+    full_name = message.text
     try:
-        res = db.set_new_teacher(name=my_global_dict['name_new_teacher'],
-                                 password=password)
+        res = db.save_teacher(name=my_global_dict['name_new_teacher'],
+                              password=my_global_dict['password_new_teacher'],
+                              full_name=full_name)
         if res:
             await message.answer('Преподаватель создан успешно')
         else:
