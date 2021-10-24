@@ -252,7 +252,8 @@ class BaseLowDatabase:
             else:
                 sql = 'select s.name, s.full_name, s.course, spc.name ' \
                       'from student s ' \
-                      'inner join speciality spc on spc.id = s.id_spec '
+                      'inner join speciality spc on spc.id = s.id_spec ' \
+                      'where s.is_delete<>TRUE'
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -476,8 +477,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
     def delete_student(self, id):
         try:
             with self.conn.cursor() as cur:
-                sql = "delete from student " \
-                      f"where id = {id}"
+                sql = f"Update student set is_delete = TRUE where id = {id}"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
