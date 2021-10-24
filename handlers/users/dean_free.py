@@ -25,7 +25,8 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/set_bells - Изменить расписание звонков',
         '/help - Получить справку',
         '/delete_teacher - Удалить преподавателя',
-        '/delete_student - Удалить студента'
+        '/delete_student - Удалить студента',
+        '/delete_fac - Удалить факультет'
         '/see_bells - Просмотреть расписание звонков',
         '/see_deans - Просмотреть список деканов',
         '/see_faculty - Просмотреть список факультетов',
@@ -66,6 +67,27 @@ async def add_subject(message: types.Message, state: FSMContext):
         await message.answer('Вероятнее всего вы не указали аргументы - имя преподавателя и название предмета'
                              'через пробел')
     logging.warning('Конец функции add_subject')
+
+
+@dp.message_handler(Command('delete_fac'), state=DeanState.FreeState)
+async def delete_fac_first(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции delete_fac')
+    await message.answer('Введите имя факультета, которого вы хотите удалить')
+    await DeanState.DeleteFaculty.set()
+
+
+@dp.message_handler(state=DeanState.DeleteFaculty)
+async def delete_fac_second(message: types.Message, state: FSMContext):
+    name_faculty = message.text
+    try:
+        res = db.delete_faculty(name_faculty)
+        if res:
+            await message.answer('Факультет удален успешно')
+        else:
+            await message.answer('Факультет не был удален')
+    except Exception as err:
+        await message.answer(f'Ошибка - {err}')
+    await DeanState.FreeState.set()
 
 
 @dp.message_handler(Command('delete_student'), state=DeanState.FreeState)

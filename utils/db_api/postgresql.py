@@ -202,6 +202,11 @@ class DatabaseForAdmin(BaseDatabase):
         res = self.low_db.delete_teacher_by_name(name)
         return res
 
+    def delete_faculty(self, name):
+        res = self.low_db.delete_fac_by_name(name)
+        return res
+
+
 class DatabaseForTeacher(BaseDatabase):
     def __init__(self):
         self.low_db = LowDatabaseForTeacher()
@@ -251,7 +256,8 @@ class BaseLowDatabase:
     def select_facultyes(self):
         with self.conn.cursor() as cur:
             sql = 'Select f.name ' \
-                  'from faculty f'
+                  'from faculty f ' \
+                  'where f.is_delete <> TRUE '
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -513,6 +519,21 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                 sql = f"Update teacher " \
                       f"set is_delete = TRUE " \
                       f"where name='{name}' or full_name = '{name}'"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete teacher_by_name')
+            logging.error(err)
+            return False
+
+    def delete_fac_by_name(self, name):
+        try:
+            with self.conn.cursor() as cur:
+                # sql = f"Delete from teacher where name='{name}' or full_name = '{name}'"
+                sql = f"Update faculty " \
+                      f"set is_delete = TRUE " \
+                      f"where name='{name}' "
                 cur.execute(sql)
                 self.conn.commit()
                 return True
