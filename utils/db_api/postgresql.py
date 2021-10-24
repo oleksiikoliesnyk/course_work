@@ -104,6 +104,18 @@ class BaseDatabase:
         else:
             return False
 
+    def get_facultyes(self):
+        res = list()
+        facultyes = self.low_db.select_facultyes()
+        for fac in facultyes:
+            res_string = f'{fac[0]}'
+            res.append(res_string)
+        print(res)
+        # print(raw_res[0][1])
+        # res = [i[1] for i in raw_res]
+        # res = ', '.join(res)
+        return res
+
     def get_user_by_credentionals(self, password, full_name, username):
         students = self.low_db.select_student_by_cred(password=password,
                                                       full_name=full_name,
@@ -238,7 +250,8 @@ class BaseLowDatabase:
 
     def select_facultyes(self):
         with self.conn.cursor() as cur:
-            sql = 'Select * from faculty'
+            sql = 'Select f.name ' \
+                  'from faculty f'
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -617,7 +630,8 @@ class Database:
 
     def get_facultyes(self):
         res = 'a, b, c'
-        # raw_res = self.low_db.select_facultyes()
+        raw_res = self.low_db.select_facultyes()
+        print(raw_res)
         # print(raw_res[0][1])
         # res = [i[1] for i in raw_res]
         # res = ', '.join(res)

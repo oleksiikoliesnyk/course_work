@@ -191,7 +191,8 @@ async def see_bells(message: types.Message, state: FSMContext):
     await message.answer('Выводим список факультетов...')
     res = db.get_facultyes()
     logging.warning(f'Получен ответ от модуля db. res = {res}')
-    await message.answer(res)
+    for fac in res:
+        await message.answer(fac)
 
 
 @dp.message_handler(Command('see_homework'), state=DeanState.FreeState)
