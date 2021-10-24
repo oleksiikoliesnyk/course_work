@@ -344,7 +344,7 @@ async def set_fac_first(message: types.Message, state: FSMContext):
 @dp.message_handler(state=DeanState.SetFac)
 async def set_fac_finally(message: types.Message, state: FSMContext):
     name = message.text
-    res = db.create_fac(name)
+    res = db.save_faculty(name)
     if res:
         await message.answer('Факультет успешно создан')
     else:
