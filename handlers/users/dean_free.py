@@ -21,7 +21,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
     text = [
         'Список команд: ',
         '/add_subject {ИмяПреподавателя} {НазваниеПредмета} - Добавить преподавателю новый предмет',
-        '/add_speciality_for_teacher - Добавить преподавателя на новую специальность'
+        '/add_speciality_for_teacher - Добавить преподавателя на новую специальность',
         '/set_bells - Изменить расписание звонков',
         '/help - Получить справку',
         '/delete_teacher - Удалить преподавателя',
@@ -42,7 +42,8 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/set_new_fac - Добавить новый факультет',
         '/set_new_spec - Добавить новую специальность',
         '/set_student - Добавить нового студента',
-        '/set_teacher - Добавить нового преподавателя'
+        '/set_teacher - Добавить нового преподавателя',
+        '/set_admin - Добавить нового админа'
 
     ]
     await message.answer('\n'.join(text))
@@ -67,6 +68,48 @@ async def add_subject(message: types.Message, state: FSMContext):
         await message.answer('Вероятнее всего вы не указали аргументы - имя преподавателя и название предмета'
                              'через пробел')
     logging.warning('Конец функции add_subject')
+
+
+@dp.message_handler(Command('set_admin'), state=DeanState.FreeState)
+async def set_admin_first(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции set_admin')
+    await message.answer('Введите имя админа: ')
+    await DeanState.SetAdminFirst.set()
+
+
+@dp.message_handler(state=DeanState.SetAdminFirst)
+async def set_admin_second(message: types.Message, state: FSMContext):
+    logging.warning(f'Получили имя админа от пользователя. Это - {message.text}')
+    my_global_dict['new_admin_name'] = message.text
+    await message.answer('Введите полное имя админа')
+    await DeanState.SetAdminSecond.set()
+
+
+@dp.message_handler(state=DeanState.SetAdminSecond)
+async def set_admin_third(message: types.Message, state: FSMContext):
+    logging.warning(f'Получили полное имя админа от пользователя. Это - {message.text}')
+    my_global_dict['new_admin_fullname'] = message.text
+    await message.answer('Введите пароль админа')
+    await DeanState.SetAdminThird.set()
+
+
+@dp.message_handler(state=DeanState.SetAdminThird)
+async def set_admin_third(message: types.Message, state: FSMContext):
+    logging.warning(f'Получили пароль админа от пользователя')
+    try:
+        res = db.save_admin(name=my_global_dict['new_admin_name'],
+                            full_name=my_global_dict['new_admin_fullname'],
+                            password=message.text)
+        if res:
+            await message.answer('Админ успешно сохранен! ')
+            logging.warning('Админ успешно сохранен!')
+        else:
+            await message.answer('Админ не был сохранен!')
+    except Exception as err:
+        await message.answer('Не удалось зарегестировать нового админа!\n'
+                             f'Ошибка = {err}')
+    logging.warning('Конец функции сохранения админа!')
+    await DeanState.FreeState.set()
 
 
 @dp.message_handler(Command('delete_fac'), state=DeanState.FreeState)

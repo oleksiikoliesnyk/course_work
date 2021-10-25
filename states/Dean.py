@@ -24,3 +24,6 @@ class DeanState(StatesGroup):
     SetTeacherThird = State()
     DeleteStudent = State()
     DeleteFaculty = State()
+    SetAdminFirst = State()
+    SetAdminSecond = State()
+    SetAdminThird = State()
