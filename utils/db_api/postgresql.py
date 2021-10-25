@@ -37,8 +37,16 @@ class BaseDatabase:
         return res
 
     def get_admins(self):
-        raw_res = self.low_db.select_admins()
-        res = raw_res  # Тут будет обработка
+        res = list()
+        admins = self.low_db.select_admins()
+        for admin in admins:
+            if admin[1] !='None':
+                res_string = f'Полное имя админа: {admin[1]} \n' \
+                             f'Ник админа: {admin[2]}'
+            else:
+                res_string = f'Ник админа: {admin[2]} \n' \
+                             f'Полное имя отсутствует'
+            res.append(res_string)
         return res
 
     def get_bells(self):
@@ -240,8 +248,9 @@ class BaseLowDatabase:
 
     def select_admins(self):
         with self.conn.cursor() as cur:
-            sql = 'Select * from dean d' \
-                  'where d.is_deleted <> TRUE;'
+            sql = 'Select * ' \
+                  'from admin a ' \
+                  'where a.is_delete <> TRUE;'
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results

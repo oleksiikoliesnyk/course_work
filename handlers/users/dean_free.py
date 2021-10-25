@@ -28,7 +28,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/delete_student - Удалить студента',
         '/delete_fac - Удалить факультет'
         '/see_bells - Просмотреть расписание звонков',
-        '/see_deans - Просмотреть список деканов',
+        '/see_admins - Просмотреть список админов',
         '/see_faculty - Просмотреть список факультетов',
         '/see_homework - Просмотреть все домашние задания',
         '/see_speciality - Просмотреть все специальности',
@@ -196,15 +196,15 @@ async def see_bells(message: types.Message, state: FSMContext):
     logging.warning('Конец функции see_bells')
 
 
-@dp.message_handler(Command('see_deans'), state=DeanState.FreeState)
+@dp.message_handler(Command('see_admins'), state=DeanState.FreeState)
 async def see_bells(message: types.Message, state: FSMContext):
-    logging.warning('Начало функции see_deans')
+    logging.warning('Начало функции see_admins')
     await message.answer('Выводим список деканов...')
-    dict_deans = db.get_deans()
-    logging.warning(f'Получен ответ от модуля db. dict_deans = {dict_deans}')
-    for i in dict_deans:
-        await message.answer(f'Имя декана: {dict_deans[i][0]}. Полное имя декана: {dict_deans[i][1]}')
-    logging.warning('Конец функции see_deans')
+    admins = db.get_admins()
+    logging.warning(f'Получен ответ от модуля db. admins = {admins}')
+    for admin in admins:
+        await message.answer(admin)
+    logging.warning('Конец функции see_admins')
 
 
 @dp.message_handler(Command('see_faculty'), state=DeanState.FreeState)
