@@ -27,3 +27,4 @@ class DeanState(StatesGroup):
     SetAdminFirst = State()
     SetAdminSecond = State()
     SetAdminThird = State()
+    DeleteAdminFirst = State()
