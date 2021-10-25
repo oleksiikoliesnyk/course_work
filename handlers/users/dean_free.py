@@ -211,20 +211,23 @@ async def true_change_bells_first(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=DeanState.ChangeBellSecond)
 async def true_change_bells_second(message: types.Message, state: FSMContext):
-    first_time, second_time = message.text.split(' ')
-    logging.warning(f'Получено время от пользователя. First_time = {first_time}, second_time = {second_time}')
-    first_time = datetime.strptime(first_time, '%H:%M').time()
-    second_time = datetime.strptime(second_time, '%H:%M').time()
-    logging.warning(f'Время сконвертировано. First_time = {first_time}, second_time = {second_time}')
-    res = db.set_bells(id=my_global_dict['id_bell'],
-                       first_time=first_time,
-                       second_time=second_time)
-    logging.warning(f'Получен ответ от модуля db. res = {res}')
-    if res:
-        await message.answer(f'Время на {my_global_dict["id_bell"]}-ой паре успешно выставлено')
-        await message.answer(f'Время начала = {first_time}, время конца = {second_time}', )
-        await DeanState.FreeState.set()
-    logging.warning('Конец функции set_bells')
+    try:
+        first_time, second_time = message.text.split(' ')
+        logging.warning(f'Получено время от пользователя. First_time = {first_time}, second_time = {second_time}')
+        first_time = datetime.strptime(first_time, '%H:%M').time()
+        second_time = datetime.strptime(second_time, '%H:%M').time()
+        logging.warning(f'Время сконвертировано. First_time = {first_time}, second_time = {second_time}')
+        res = db.save_bell(id=my_global_dict['id_bell'],
+                           first_time=first_time,
+                           second_time=second_time)
+        logging.warning(f'Получен ответ от модуля db. res = {res}')
+        if res:
+            await message.answer(f'Время на {my_global_dict["id_bell"]}-ой паре успешно выставлено')
+            await message.answer(f'Время начала = {first_time}, время конца = {second_time}', )
+            await DeanState.FreeState.set()
+        logging.warning('Конец функции set_bells')
+    except Exception as err:
+        await message.answer(err)
 
 
 @dp.message_handler(Command('delete_teacher'), state=DeanState.FreeState)
@@ -254,11 +257,9 @@ async def see_bells(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_bells')
     await message.answer('Выводим список звонков...')
     res = db.get_bells()
-    index_list = list(res.keys())
-    index_list.sort()
     logging.warning(f'Получен ответ от модуля db. res = {res}')
-    for i in index_list:
-        await message.answer(f'{i}-ая пара. Начинается в {res[i][0]}. Заканчивается в {res[i][1]}')
+    for bell in res:
+        await message.answer(bell)
     logging.warning('Конец функции see_bells')
 
 

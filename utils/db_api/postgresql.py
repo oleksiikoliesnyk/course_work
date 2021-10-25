@@ -50,8 +50,13 @@ class BaseDatabase:
         return res
 
     def get_bells(self):
-        raw_res = self.low_db.select_bells()
-        res = raw_res  # Тут будет обработка
+        bells = self.low_db.select_bells()
+        res = list()
+        for bell in bells:
+            res_string = f'Пара номер {bell[0]},\n' \
+                         f'Время начала пары: {bell[1]},\n' \
+                         f'Время конца пары: {bell[2]}'
+            res.append(res_string)
         return res
 
     def get_timetable(self):
@@ -391,6 +396,14 @@ class BaseLowDatabase:
         with self.conn.cursor() as cur:
             sql = 'Select s.id from speciality s ' \
                   f"where name = '{name}'"
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def get_bell_by_id(self, id):
+        with self.conn.cursor() as cur:
+            sql = 'Select * from bell ' \
+                  f"where id = '{id}'"
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
