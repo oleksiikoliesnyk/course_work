@@ -26,8 +26,8 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/help - Получить справку',
         '/delete_teacher - Удалить преподавателя',
         '/delete_student - Удалить студента',
-        '/delete_admin - Удалить админа'
-        '/delete_fac - Удалить факультет'
+        '/delete_admin - Удалить админа',
+        '/delete_fac - Удалить факультет',
         '/see_bells - Просмотреть расписание звонков',
         '/see_admins - Просмотреть список админов',
         '/see_faculty - Просмотреть список факультетов',
