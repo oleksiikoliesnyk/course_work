@@ -573,3 +573,4 @@ async def set_new_teacher_third(message: types.Message, state: FSMContext):
     except Exception as err:
         await message.answer('Ошибка! Преподаватель не создан')
         await message.answer(f'Ошибка = {err}')
+    await DeanState.FreeState.set()
