@@ -68,8 +68,12 @@ class BaseDatabase:
         return '1, 2, 3'
 
     def get_speciality(self):
-        raw_res = self.low_db.select_specialization()
-        res = raw_res  # Тут будет обработка
+        specialityes = self.low_db.select_specialization()
+        res = list()
+        for spec in specialityes:
+            res_string = f'Специальность:  {spec[0]} \n' \
+                         f'Факультет:  {spec[1]}'
+            res.append(res_string)
         return res
 
     def get_homework(self):

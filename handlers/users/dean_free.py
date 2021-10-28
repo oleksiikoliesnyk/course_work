@@ -301,7 +301,8 @@ async def see_speciality(message: types.Message, state: FSMContext):
     await message.answer('Выводим все специальности...')
     res = db.get_speciality()
     logging.warning(f'Получен ответ от модуля db. res = {res}')
-    await message.answer(res)
+    for r in res:
+        await message.answer(r)
     logging.warning('Конец функции see_speciality')
 
 
