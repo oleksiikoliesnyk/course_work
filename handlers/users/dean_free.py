@@ -321,7 +321,7 @@ async def see_student(message: types.Message, state: FSMContext):
 async def see_subject(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_subject')
     await message.answer('Выводим все предметы...')
-    res = db.get_subjects()
+    res = db.get_subject()
     logging.warning(f'Получен ответ от модуля db. res = {res}')
     await message.answer(res)
     logging.warning('Конец функции see_subject')
@@ -460,8 +460,9 @@ async def set_spec_third(message: types.Message, state: FSMContext):
     my_global_dict['name_fac_for_new_spec'] = message.text
     try:
         id_fac = db.get_id_fac_by_name(my_global_dict['name_fac_for_new_spec'])
-        res = db.set_spec(name=my_global_dict['name_new_spec'],
-                          id_fac=id_fac)
+        await message.answer(f'АЙДИШНИК У ФАКУЛЬТЕТА = {id_fac}')
+        res = db.save_specialization(name=my_global_dict['name_new_spec'],
+                                        fac_id=id_fac)
         if res:
             await message.answer('Специальность задана успешно')
         else:

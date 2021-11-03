@@ -155,6 +155,11 @@ class BaseDatabase:
         else:
             return False, False
 
+    def get_id_fac_by_name(self, name):
+        res = self.low_db.select_id_fac_by_name(name)
+        if res:
+            return res[0][0]
+
 
 class DatabaseForAdmin(BaseDatabase):
 
@@ -205,9 +210,8 @@ class DatabaseForAdmin(BaseDatabase):
         res = self.low_db.insert_faculty(name)
         return res
 
-    def save_specialization(self, name_spec, name_fac):
-        fac_id = self.low_db.select_id_fac_by_name(name_fac)
-        res = self.low_db.insert_specialization(name=name_spec,
+    def save_specialization(self, name, fac_id):
+        res = self.low_db.insert_specialization(name=name,
                                                 id=fac_id)
         return res
 
@@ -343,8 +347,8 @@ class BaseLowDatabase:
 
     def select_id_fac_by_name(self, name_fac):
         with self.conn.cursor() as cur:
-            sql = 'Select f.id from facultyes f' \
-                  f'where f.name = "{name_fac}";'
+            sql = 'Select f.id from faculty f ' \
+                  f"where f.name = '{name_fac}' and is_delete<>TRUE ;"
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -515,19 +519,21 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into insert_faculty!')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def insert_specialization(self, name, id):
         try:
             with self.conn.cursor() as cur:
-                sql = "Insert into specialization(name,id_fac) " \
-                      f"values('{name}','{id}')"
+                sql = "Insert into speciality(name, id_fac, is_delete) " \
+                      f"values('{name}', {id}, 'false')"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
         except Exception as err:
             logging.error('Error into insert_specialization!')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def delete_student(self, id):
