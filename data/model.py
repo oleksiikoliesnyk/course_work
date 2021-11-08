@@ -160,8 +160,10 @@ class Homework(DefaultEssence):
 
 
 class TimeTable(DefaultEssence):
-    def read(self):
-        pass
+    def read(self, speciality):
+        timetable = db_admin.get_timetable(speciality)
+        return timetable
+
 
     def write(self):
         pass

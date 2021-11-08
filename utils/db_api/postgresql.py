@@ -59,8 +59,16 @@ class BaseDatabase:
             res.append(res_string)
         return res
 
-    def get_timetable(self):
-        pass
+    def get_timetable(self, speciality):
+        all_timetable = self.low_db.select_timetable(speciality)
+        res = list()
+        for timetable in all_timetable:
+            res_string = f'День недели = {timetable[0]},\n' \
+                         f'Номер пары = {timetable[1]}, \n' \
+                         f'Специальность = {timetable[2]},\n' \
+                         f'Название предмета = {timetable[3]}'
+            res.append(res_string)
+        return res
 
     def get_faculty(self):
         raw_res = self.low_db.select_facultyes()
@@ -431,6 +439,17 @@ class BaseLowDatabase:
         with self.conn.cursor() as cur:
             sql = 'Select * from bell ' \
                   f"where id = '{id}'"
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_timetable(self, speciality):
+        with self.conn.cursor() as cur:
+            sql = 'Select t.day_of_week, t.bell_id, s.name, sbj.name ' \
+                  ' from timetable t ' \
+                  'inner join speciality s on s.id = t.specialization_id ' \
+                  'inner join subject sbj on sbj.id = t.id_subject ' \
+                  f"where s.name = '{speciality}' and s.is_delete<>TRUE "
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results

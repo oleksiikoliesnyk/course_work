@@ -30,3 +30,4 @@ class DeanState(StatesGroup):
     DeleteAdminFirst = State()
     DeleteSubject = State()
     DeleteSpeciality = State()
+    SelectTimetable = State()

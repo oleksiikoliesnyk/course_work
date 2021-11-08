@@ -8,7 +8,7 @@ from aiogram.types import CallbackQuery
 
 from data.db_constant import facultys
 from data.global_conf import my_global_dict
-from data.model import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject
+from data.model import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable
 from keyboards.inline.faculty_button.faculty_button import fac_choice
 from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
@@ -36,6 +36,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/see_faculty - Просмотреть список факультетов',
         '/see_homework - Просмотреть все домашние задания',
         '/see_speciality - Просмотреть все специальности',
+        '/see_timetable - Просмотреть расписание',
         '/see_student - Просмотреть список всех студентов',
         '/see_subject - Просмотреть список всех предметов',
         '/see_teacher - Просмотреть список всех преподавателей',
@@ -74,6 +75,24 @@ async def add_subject(message: types.Message, state: FSMContext):
         await message.answer('Вероятнее всего вы не указали аргументы - имя преподавателя и название предмета'
                              'через пробел')
     logging.warning('Конец функции add_subject')
+
+
+@dp.message_handler(Command('see_timetable'), state=DeanState.FreeState)
+async def see_timetable_first(message: types.Message, state: FSMContext):
+    logging.warning('Началась функция показа расписания')
+    await message.answer('Введите специальность, расписание которой вы хотите посмотреть')
+    await DeanState.SelectTimetable.set()
+
+
+@dp.message_handler(state=DeanState.SelectTimetable)
+async def see_timetable_first(message: types.Message, state: FSMContext):
+    name_of_speciality = message.text
+    logging.warning(f'Название специальности, введенная пользователем: {name_of_speciality}')
+    my_timetable = TimeTable()
+    timetable_list = my_timetable.read(name_of_speciality)
+    for timetable in timetable_list:
+        await message.answer(timetable)
+    await DeanState.FreeState.set()
 
 
 @dp.message_handler(Command('delete_subject'), state=DeanState.FreeState)
