@@ -59,8 +59,16 @@ class BaseDatabase:
             res.append(res_string)
         return res
 
-    def get_timetable(self):
-        pass
+    def get_timetable(self, speciality):
+        all_timetable = self.low_db.select_timetable(speciality)
+        res = list()
+        for timetable in all_timetable:
+            res_string = f'День недели = {timetable[0]},\n' \
+                         f'Номер пары = {timetable[1]}, \n' \
+                         f'Специальность = {timetable[2]},\n' \
+                         f'Название предмета = {timetable[3]}'
+            res.append(res_string)
+        return res
 
     def get_faculty(self):
         raw_res = self.low_db.select_facultyes()
@@ -93,7 +101,14 @@ class BaseDatabase:
             return False
 
     def get_subject(self):
-        raw_res = self.low_db.select_subject()
+        result = list()
+        subjects = self.low_db.select_subject()
+        for sub in subjects:
+            res_string = f'Предмет: {sub[0]},\n' \
+                         f'Преподаватель, который ведет: {sub[1]}'
+            result.append(res_string)
+        return result
+
         res = raw_res
         return res
 
@@ -186,6 +201,13 @@ class DatabaseForAdmin(BaseDatabase):
                                        full_name=full_name)
         return res
 
+    def save_timetable(self, bell, subject, specialization, day_of_week):
+        subject_id = self.low_db.select_subjectid_by_name(subject)[0][0]
+        specialization_id = self.low_db.select_specializationid_by_name(specialization)[0][0]
+        #todo: сделать проверку,  что может он не добавляет, а изменяет расписание!
+        res = self.low_db.insert_timetable(bell, subject_id, specialization_id, day_of_week)
+        return res
+
     def save_subject(self, subject, teacher):
         my_id = self.get_id_teacher_by_name(name=teacher)
         if my_id:
@@ -219,6 +241,10 @@ class DatabaseForAdmin(BaseDatabase):
         res = self.low_db.delete_student(id)
         return res
 
+    def delete_subject(self, name):
+        res = self.low_db.delete_subject(name)
+        return res
+
     def delete_admin(self, name):
         res = self.low_db.delete_admin(name)
         return res
@@ -229,6 +255,10 @@ class DatabaseForAdmin(BaseDatabase):
 
     def delete_faculty(self, name):
         res = self.low_db.delete_fac_by_name(name)
+        return res
+
+    def delete_speciality(self, id):
+        res  = self.low_db.delete_speciality(id)
         return res
 
 
@@ -292,7 +322,8 @@ class BaseLowDatabase:
         with self.conn.cursor() as cur:
             sql = 'select s.name, f.name ' \
                   'from speciality s ' \
-                  'inner join faculty f on f.id = s.id_fac; '
+                  'inner join faculty f on f.id = s.id_fac ' \
+                  'where s.is_delete <> TRUE ; '
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -340,7 +371,10 @@ class BaseLowDatabase:
 
     def select_subject(self):
         with self.conn.cursor() as cur:
-            sql = 'Select * from subject'
+            sql = 'Select s.name, t.full_name ' \
+                  'from subject s ' \
+                  'inner join teacher t on t.id = s.teacher_id ' \
+                  'where s.is_delete<>TRUE'
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -412,6 +446,35 @@ class BaseLowDatabase:
         with self.conn.cursor() as cur:
             sql = 'Select * from bell ' \
                   f"where id = '{id}'"
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_timetable(self, speciality):
+        with self.conn.cursor() as cur:
+            sql = 'Select t.day_of_week, t.bell_id, s.name, sbj.name ' \
+                  ' from timetable t ' \
+                  'inner join speciality s on s.id = t.specialization_id ' \
+                  'inner join subject sbj on sbj.id = t.id_subject ' \
+                  f"where s.name = '{speciality}' and s.is_delete<>TRUE "
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_subjectid_by_name(self, subject):
+        with self.conn.cursor() as cur:
+            sql = 'Select s.id ' \
+                  'from subject s ' \
+                  f"where s.name = '{subject}' and s.is_delete<>TRUE "
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_specializationid_by_name(self, specialization):
+        with self.conn.cursor() as cur:
+            sql = 'Select s.id ' \
+                  'from speciality s ' \
+                  f"where s.name = '{specialization}' and s.is_delete<>TRUE "
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -591,6 +654,50 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error('Error into delete teacher_by_name')
             logging.error(err)
             return False
+
+    def delete_subject(self, name):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"Update subject " \
+                      f"set is_delete = TRUE " \
+                      f"where name='{name}' "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete teacher_subject')
+            logging.error(err)
+            return False
+
+    def delete_speciality(self, id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"Update speciality " \
+                      f"set is_delete = TRUE " \
+                      f"where name='{id}' "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete delete_speciality')
+            logging.error(err)
+            return False
+
+    def insert_timetable(self, bell, subject, specialization, day_of_week):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "Insert into timetable(bell_id, id_subject, specialization_id, day_of_week) " \
+                      f"values({bell}, {subject}, {specialization}, '{day_of_week}')"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_timetable!')
+            logging.error(err)
+            self.conn.rollback()
+            return False
+
+
 
 
 class LowDatabaseForTeacher(BaseLowDatabase):

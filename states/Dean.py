@@ -28,3 +28,11 @@ class DeanState(StatesGroup):
     SetAdminSecond = State()
     SetAdminThird = State()
     DeleteAdminFirst = State()
+    DeleteSubject = State()
+    DeleteSpeciality = State()
+    SelectTimetable = State()
+    SetTimetableFirst = State()
+    SetTimetableSecond = State()
+    SetTimetableThird = State()
+    SetTimetableFourth = State()
+
