@@ -201,6 +201,13 @@ class DatabaseForAdmin(BaseDatabase):
                                        full_name=full_name)
         return res
 
+    def save_timetable(self, bell, subject, specialization, day_of_week):
+        subject_id = self.low_db.select_subjectid_by_name(subject)[0][0]
+        specialization_id = self.low_db.select_specializationid_by_name(specialization)[0][0]
+        #todo: сделать проверку,  что может он не добавляет, а изменяет расписание!
+        res = self.low_db.insert_timetable(bell, subject_id, specialization_id, day_of_week)
+        return res
+
     def save_subject(self, subject, teacher):
         my_id = self.get_id_teacher_by_name(name=teacher)
         if my_id:
@@ -454,6 +461,24 @@ class BaseLowDatabase:
             query_results = cur.fetchall()
             return query_results
 
+    def select_subjectid_by_name(self, subject):
+        with self.conn.cursor() as cur:
+            sql = 'Select s.id ' \
+                  'from subject s ' \
+                  f"where s.name = '{subject}' and s.is_delete<>TRUE "
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_specializationid_by_name(self, specialization):
+        with self.conn.cursor() as cur:
+            sql = 'Select s.id ' \
+                  'from speciality s ' \
+                  f"where s.name = '{specialization}' and s.is_delete<>TRUE "
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
 
 class LowDatabaseForAdmin(BaseLowDatabase):
     def __init__(self):
@@ -657,6 +682,22 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error('Error into delete delete_speciality')
             logging.error(err)
             return False
+
+    def insert_timetable(self, bell, subject, specialization, day_of_week):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "Insert into timetable(bell_id, id_subject, specialization_id, day_of_week) " \
+                      f"values({bell}, {subject}, {specialization}, '{day_of_week}')"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_timetable!')
+            logging.error(err)
+            self.conn.rollback()
+            return False
+
+
 
 
 class LowDatabaseForTeacher(BaseLowDatabase):

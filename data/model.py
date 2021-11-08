@@ -164,9 +164,16 @@ class TimeTable(DefaultEssence):
         timetable = db_admin.get_timetable(speciality)
         return timetable
 
-
-    def write(self):
-        pass
+    def write(self, data):
+        bell = data['bell']
+        subject = data['subject']
+        specialization = data['specialization']
+        day_of_week = data['day_of_week']
+        flag = db_admin.save_timetable(bell=bell,
+                                       subject=subject,
+                                       specialization=specialization,
+                                       day_of_week=day_of_week)
+        return flag
 
     def delete(self):
         pass

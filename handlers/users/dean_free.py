@@ -48,6 +48,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/set_new_spec - Добавить новую специальность',
         '/set_student - Добавить нового студента',
         '/set_teacher - Добавить нового преподавателя',
+        '/set_timetable - Добавить предмет в расписание',
         '/set_admin - Добавить нового админа'
 
     ]
@@ -77,6 +78,64 @@ async def add_subject(message: types.Message, state: FSMContext):
     logging.warning('Конец функции add_subject')
 
 
+@dp.message_handler(Command('set_timetable'), state=DeanState.FreeState)
+async def set_timetable_first(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции set_timetable')
+    await message.answer('Введите день недели (пока на английском с большой буквы)')
+    await DeanState.SetTimetableFirst.set()
+
+
+@dp.message_handler(state=DeanState.SetTimetableFirst)
+async def set_timetable_second(message: types.Message, state: FSMContext):
+    day = message.text
+    my_global_dict['timetable_day'] = day
+    if day not in ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'):
+        await message.answer('Введен неверный день недели, переход в свободный режим')
+        await DeanState.FreeState.set()
+    logging.warning(f'День недели = {day}')
+    await message.answer('Введите номер пары, на которой будет нужный вам предмет')
+    await DeanState.SetTimetableSecond.set()
+
+
+@dp.message_handler(state=DeanState.SetTimetableSecond)
+async def set_timetable_third(message: types.Message, state: FSMContext):
+    try:
+        bell_id = int(message.text)
+        my_global_dict['timetable_bell'] = bell_id
+        logging.warning(f'Номер пары = {bell_id}')
+        await message.answer('Введите название предмета')
+        await DeanState.SetTimetableThird.set()
+    except Exception as err:
+        await message.answer(f'Возникла ошибка = {err}')
+        await DeanState.FreeState.set()
+
+
+@dp.message_handler(state=DeanState.SetTimetableThird)
+async def set_timetable_fourth(message: types.Message, state: FSMContext):
+    subject_name = message.text
+    my_global_dict['timetable_subject'] = subject_name
+    logging.warning(f'Предмет = {subject_name}')
+    await message.answer('Введите специализацию')
+    await DeanState.SetTimetableFourth.set()
+
+
+@dp.message_handler(state=DeanState.SetTimetableFourth)
+async def set_timetable_fifth(message: types.Message, state: FSMContext):
+    specialization_name = message.text
+    logging.warning(f'Специализация = {specialization_name}')
+    data_to_save = {'bell': my_global_dict['timetable_bell'],
+                    'subject': my_global_dict['timetable_subject'],
+                    'specialization': specialization_name,
+                    'day_of_week': my_global_dict['timetable_day']}
+    my_timetable = TimeTable()
+    res = my_timetable.write(data_to_save)
+    if res:
+        await message.answer('Успешно сохранено!')
+    else:
+        await message.answer('Не было сохранено!')
+    await DeanState.FreeState.set()
+
+
 @dp.message_handler(Command('see_timetable'), state=DeanState.FreeState)
 async def see_timetable_first(message: types.Message, state: FSMContext):
     logging.warning('Началась функция показа расписания')
@@ -85,7 +144,7 @@ async def see_timetable_first(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=DeanState.SelectTimetable)
-async def see_timetable_first(message: types.Message, state: FSMContext):
+async def see_timetable_second(message: types.Message, state: FSMContext):
     name_of_speciality = message.text
     logging.warning(f'Название специальности, введенная пользователем: {name_of_speciality}')
     my_timetable = TimeTable()
