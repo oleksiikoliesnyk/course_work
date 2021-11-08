@@ -93,7 +93,14 @@ class BaseDatabase:
             return False
 
     def get_subject(self):
-        raw_res = self.low_db.select_subject()
+        result = list()
+        subjects = self.low_db.select_subject()
+        for sub in subjects:
+            res_string = f'Предмет: {sub[0]},\n' \
+                         f'Преподаватель, который ведет: {sub[1]}'
+            result.append(res_string)
+        return result
+
         res = raw_res
         return res
 
@@ -219,6 +226,10 @@ class DatabaseForAdmin(BaseDatabase):
         res = self.low_db.delete_student(id)
         return res
 
+    def delete_subject(self, name):
+        res = self.low_db.delete_subject(name)
+        return res
+
     def delete_admin(self, name):
         res = self.low_db.delete_admin(name)
         return res
@@ -340,7 +351,10 @@ class BaseLowDatabase:
 
     def select_subject(self):
         with self.conn.cursor() as cur:
-            sql = 'Select * from subject'
+            sql = 'Select s.name, t.full_name ' \
+                  'from subject s ' \
+                  'inner join teacher t on t.id = s.teacher_id ' \
+                  'where s.is_delete<>TRUE'
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -582,6 +596,20 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         try:
             with self.conn.cursor() as cur:
                 sql = f"Update admin " \
+                      f"set is_delete = TRUE " \
+                      f"where name='{name}' "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete teacher_by_name')
+            logging.error(err)
+            return False
+
+    def delete_subject(self, name):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"Update subject " \
                       f"set is_delete = TRUE " \
                       f"where name='{name}' "
                 cur.execute(sql)
