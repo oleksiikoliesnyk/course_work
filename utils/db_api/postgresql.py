@@ -242,6 +242,10 @@ class DatabaseForAdmin(BaseDatabase):
         res = self.low_db.delete_fac_by_name(name)
         return res
 
+    def delete_speciality(self, id):
+        res  = self.low_db.delete_speciality(id)
+        return res
+
 
 class DatabaseForTeacher(BaseDatabase):
     def __init__(self):
@@ -303,7 +307,8 @@ class BaseLowDatabase:
         with self.conn.cursor() as cur:
             sql = 'select s.name, f.name ' \
                   'from speciality s ' \
-                  'inner join faculty f on f.id = s.id_fac; '
+                  'inner join faculty f on f.id = s.id_fac ' \
+                  'where s.is_delete <> TRUE ; '
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -616,7 +621,21 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                 self.conn.commit()
                 return True
         except Exception as err:
-            logging.error('Error into delete teacher_by_name')
+            logging.error('Error into delete teacher_subject')
+            logging.error(err)
+            return False
+
+    def delete_speciality(self, id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"Update speciality " \
+                      f"set is_delete = TRUE " \
+                      f"where name='{id}' "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete delete_speciality')
             logging.error(err)
             return False
 

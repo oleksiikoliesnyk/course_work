@@ -29,7 +29,8 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/delete_student - Удалить студента',
         '/delete_admin - Удалить админа',
         '/delete_fac - Удалить факультет',
-        '/delete_subject - Удалить предмет ',
+        '/delete_subject - Удалить предмет',
+        '/delete_speciality - Удалить специальность',
         '/see_bells - Просмотреть расписание звонков',
         '/see_admins - Просмотреть список админов',
         '/see_faculty - Просмотреть список факультетов',
@@ -92,6 +93,28 @@ async def delete_subject_second(message: types.Message, state: FSMContext):
         await message.answer('Предмет был успешно удален')
     else:
         await message.answer('Предмет не был удален')
+    logging.warning('Закончилась функция удаления предмета')
+    await DeanState.FreeState.set()
+
+
+@dp.message_handler(Command('delete_speciality'), state=DeanState.FreeState)
+async def delete_speciality_first(message: types.Message, state: FSMContext):
+    logging.warning('Началась функция удаления специальности')
+    await message.answer('Введите имя специальности, которую вы хотите удалить')
+    await DeanState.DeleteSpeciality.set()
+
+
+@dp.message_handler(state=DeanState.DeleteSpeciality)
+async def delete_subject_second(message: types.Message, state: FSMContext):
+    name = message.text
+    logging.warning(f'Название предмета = {name}')
+    my_speciality = Speciality()
+    res = my_speciality.delete(name)
+    if res:
+        await message.answer('Предмет был успешно удален')
+    else:
+        await message.answer('Предмет не был удален')
+    logging.warning('Закончилась функция удаления предмета')
     await DeanState.FreeState.set()
 
 

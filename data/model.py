@@ -53,8 +53,8 @@ class Speciality(DefaultEssence):
         return res
 
     def delete(self, id):
-        # todo: realise delete
-        pass
+        flag = db_admin.delete_speciality(id)
+        return flag
 
 
 class Student(DefaultEssence):
