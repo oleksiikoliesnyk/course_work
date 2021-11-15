@@ -444,10 +444,13 @@ async def see_speciality(message: types.Message, state: FSMContext):
     await message.answer('Выводим все специальности...')
     my_speciality = Speciality()
     list_of_speciality = my_speciality.read()
-    logging.warning(f'Получен ответ от модуля Speciality. list_of_speciality = {list_of_speciality}')
-    for spec in list_of_speciality:
-        await message.answer(spec)
-    logging.warning('Конец функции see_speciality')
+    if list_of_speciality == 'Empty':
+        await message.answer('Список специальностей пуст')
+    else:
+        logging.warning(f'Получен ответ от модуля Speciality. list_of_speciality = {list_of_speciality}')
+        for spec in list_of_speciality:
+            await message.answer(spec)
+        logging.warning('Конец функции see_speciality')
 
 
 @dp.message_handler(Command('see_student'), state=DeanState.FreeState)

@@ -68,9 +68,10 @@ class BaseDatabase:
         res = list()
         for timetable in all_timetable:
             res_string = f'День недели = {timetable[0]},\n' \
-                         f'Номер пары = {timetable[1]}, \n' \
-                         f'Специальность = {timetable[2]},\n' \
-                         f'Название предмета = {timetable[3]}'
+                         f'Курс = {timetable[1]},\n' \
+                         f'Номер пары = {timetable[2]}, \n' \
+                         f'Специальность = {timetable[3]},\n' \
+                         f'Название предмета = {timetable[4]}'
             res.append(res_string)
         return res
 
@@ -81,6 +82,8 @@ class BaseDatabase:
 
     def get_speciality(self):
         specialityes = self.low_db.select_specialization()
+        if not specialityes:
+            return 'Empty'
         res = list()
         for spec in specialityes:
             res_string = f'Специальность:  {spec[0]} \n' \
@@ -460,7 +463,7 @@ class BaseLowDatabase:
 
     def select_timetable(self, speciality):
         with self.conn.cursor() as cur:
-            sql = 'Select t.day_of_week, t.bell_id, s.name, sbj.name ' \
+            sql = 'Select t.day_of_week, t.course, t.bell_id, s.name, sbj.name ' \
                   ' from timetable t ' \
                   'inner join speciality s on s.id = t.specialization_id ' \
                   'inner join subject sbj on sbj.id = t.id_subject ' \
