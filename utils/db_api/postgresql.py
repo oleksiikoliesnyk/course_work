@@ -2,6 +2,8 @@ import logging
 
 import psycopg2
 
+from data.global_conf import COUNT_OF_COURSES
+
 
 class BaseDatabase:
     def __init__(self):
@@ -61,6 +63,8 @@ class BaseDatabase:
 
     def get_timetable(self, speciality):
         all_timetable = self.low_db.select_timetable(speciality)
+        if not all_timetable:
+            return 'Empty'
         res = list()
         for timetable in all_timetable:
             res_string = f'День недели = {timetable[0]},\n' \
@@ -201,11 +205,11 @@ class DatabaseForAdmin(BaseDatabase):
                                        full_name=full_name)
         return res
 
-    def save_timetable(self, bell, subject, specialization, day_of_week):
+    def save_timetable(self, bell, subject, specialization, day_of_week, course):
         subject_id = self.low_db.select_subjectid_by_name(subject)[0][0]
         specialization_id = self.low_db.select_specializationid_by_name(specialization)[0][0]
         #todo: сделать проверку,  что может он не добавляет, а изменяет расписание!
-        res = self.low_db.insert_timetable(bell, subject_id, specialization_id, day_of_week)
+        res = self.low_db.insert_timetable(bell, subject_id, specialization_id, day_of_week, course)
         return res
 
     def save_subject(self, subject, teacher):
@@ -235,6 +239,10 @@ class DatabaseForAdmin(BaseDatabase):
     def save_specialization(self, name, fac_id):
         res = self.low_db.insert_specialization(name=name,
                                                 id=fac_id)
+        if res:
+            id = self.low_db.select_specializationid_by_name(name)[0][0]
+            for i in range(COUNT_OF_COURSES):
+                res &= self.low_db.insert_course_spec(id, course=i+1)
         return res
 
     def delete_student(self, id):
@@ -683,11 +691,11 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error(err)
             return False
 
-    def insert_timetable(self, bell, subject, specialization, day_of_week):
+    def insert_timetable(self, bell, subject, specialization, day_of_week, course):
         try:
             with self.conn.cursor() as cur:
-                sql = "Insert into timetable(bell_id, id_subject, specialization_id, day_of_week) " \
-                      f"values({bell}, {subject}, {specialization}, '{day_of_week}')"
+                sql = "Insert into timetable(bell_id, id_subject, specialization_id, day_of_week, course) " \
+                      f"values({bell}, {subject}, {specialization}, '{day_of_week}', '{course}')"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -697,7 +705,19 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             self.conn.rollback()
             return False
 
-
+    def insert_course_spec(self, id, course):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "Insert into course_spec(spec_id, course) " \
+                      f"values({id}, {course})"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_timetable!')
+            logging.error(err)
+            self.conn.rollback()
+            return False
 
 
 class LowDatabaseForTeacher(BaseLowDatabase):

@@ -31,6 +31,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/delete_fac - Удалить факультет',
         '/delete_subject - Удалить предмет',
         '/delete_speciality - Удалить специальность',
+        '/delete_timetable - Удалить расписание'
         '/see_bells - Просмотреть расписание звонков',
         '/see_admins - Просмотреть список админов',
         '/see_faculty - Просмотреть список факультетов',
@@ -123,10 +124,20 @@ async def set_timetable_fourth(message: types.Message, state: FSMContext):
 async def set_timetable_fifth(message: types.Message, state: FSMContext):
     specialization_name = message.text
     logging.warning(f'Специализация = {specialization_name}')
+    my_global_dict['timetable_specialization'] = specialization_name
+    await message.answer('Введите курс')
+    await DeanState.SetTimetableFifth.set()
+
+
+@dp.message_handler(state=DeanState.SetTimetableFifth)
+async def set_timetable_sixth(message: types.Message, state: FSMContext):
+    course = message.text
+    logging.warning(f'Курс = {course}')
     data_to_save = {'bell': my_global_dict['timetable_bell'],
                     'subject': my_global_dict['timetable_subject'],
-                    'specialization': specialization_name,
-                    'day_of_week': my_global_dict['timetable_day']}
+                    'specialization': my_global_dict['timetable_specialization'],
+                    'day_of_week': my_global_dict['timetable_day'],
+                    'course': course}
     my_timetable = TimeTable()
     res = my_timetable.write(data_to_save)
     if res:
@@ -149,8 +160,11 @@ async def see_timetable_second(message: types.Message, state: FSMContext):
     logging.warning(f'Название специальности, введенная пользователем: {name_of_speciality}')
     my_timetable = TimeTable()
     timetable_list = my_timetable.read(name_of_speciality)
-    for timetable in timetable_list:
-        await message.answer(timetable)
+    if timetable_list == 'Empty':
+        await message.answer('Расписания по вашей  специальности нет')
+    else:
+        for timetable in timetable_list:
+            await message.answer(timetable)
     await DeanState.FreeState.set()
 
 
@@ -659,13 +673,13 @@ async def set_new_student_third(message: types.Message, state: FSMContext):
                     "full_name": full_name,
                     "password": my_global_dict['password_new_student'],
                     "course": my_global_dict['course_new_student'],
-                    "id_spec": my_global_dict['spec_new_student'] }
+                    "id_spec": my_global_dict['spec_new_student']}
     try:
         logger_message = f"name = {my_global_dict['name_new_student']}, \n" \
-                       f" 'full_name = {full_name}, \n" \
-                       f" password = {my_global_dict['password_new_student']},\n " \
-                       f" course = {my_global_dict['course_new_student']},\n " \
-                       f" id_spec = {my_global_dict['spec_new_student']}' \n"
+                         f" 'full_name = {full_name}, \n" \
+                         f" password = {my_global_dict['password_new_student']},\n " \
+                         f" course = {my_global_dict['course_new_student']},\n " \
+                         f" id_spec = {my_global_dict['spec_new_student']}' \n"
         logging.warning(logger_message)
         res = my_student.write(student_data)
         if res:

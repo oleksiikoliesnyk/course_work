@@ -169,10 +169,12 @@ class TimeTable(DefaultEssence):
         subject = data['subject']
         specialization = data['specialization']
         day_of_week = data['day_of_week']
+        course = data['course']
         flag = db_admin.save_timetable(bell=bell,
                                        subject=subject,
                                        specialization=specialization,
-                                       day_of_week=day_of_week)
+                                       day_of_week=day_of_week,
+                                       course=course)
         return flag
 
     def delete(self):
