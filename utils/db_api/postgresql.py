@@ -1,4 +1,5 @@
 import logging
+from pprint import pprint
 
 import psycopg2
 
@@ -212,11 +213,59 @@ class DatabaseForAdmin(BaseDatabase):
                                        full_name=full_name)
         return res
 
+    def _check_for_update_timetable(self, bell, subject, specialization, day_of_week, course):
+        old_timetables = self.low_db.select_timetable(specialization)
+        my_dict = dict()
+        my_dict['day'] = list()
+        my_dict['course'] = list()
+        my_dict['bell'] = list()
+        my_dict['speciality'] = list()
+        my_dict['subject'] = list()
+        for timetable in old_timetables:
+            my_dict['day'].append(timetable[0])
+            my_dict['course'].append(timetable[1])
+            my_dict['bell'].append(timetable[2])
+            my_dict['speciality'].append(timetable[3])
+            my_dict['subject'].append(timetable[4])
+        print(f'SPECIALIZATION = {specialization}')
+        pprint(f'MY_DICT SPECIALIZATION = {my_dict["speciality"]}')
+        print(f"specialization in my_dict['speciality'] = {specialization in my_dict['speciality']}")
+        print('*******************************************************************************************')
+        print(f'BELL = {bell}')
+        pprint(f'MY_DICT BELL = {my_dict["bell"]}')
+        print(f"BELL in my_dict['bell'] = {bell in my_dict['bell']}")
+        print('*******************************************************************************************')
+        print(f'subject  = {subject }')
+        pprint(f'my_dict["subject"] = {my_dict["subject"]}')
+        print(f"subject in my_dict['subject'] = {subject in my_dict['subject']}")
+        print('*******************************************************************************************')
+        print(f'day_of_week  = {day_of_week}')
+        pprint(f'my_dict["day"] = {my_dict["day"]}')
+        print(f"day_of_week in my_dict['day'] = {day_of_week in my_dict['day']}")
+        print('*******************************************************************************************')
+        print(f'course  = {course}')
+        print(f'type(course) = {type(course)}')
+        print(f'type(my_dict["course"][0] = {type(my_dict["course"][0])}')
+        pprint(f'my_dict["course"] = {my_dict["course"]}')
+        print(f"course in my_dict['course'] = {course in my_dict['course']}")
+        if specialization in my_dict['speciality'] and bell in my_dict['bell'] and subject in my_dict['subject'] and day_of_week in my_dict['day'] and int(course) in my_dict['course']:
+            if my_dict['speciality'].index(specialization)==my_dict['bell'].index(bell)==my_dict['subject'].index(subject)==my_dict['day'].index(day_of_week)==my_dict['course'].index(course):
+                return True
+        else:
+            return False
+
     def save_timetable(self, bell, subject, specialization, day_of_week, course):
         subject_id = self.low_db.select_subjectid_by_name(subject)[0][0]
         specialization_id = self.low_db.select_specializationid_by_name(specialization)[0][0]
+        #is_update = self._check_for_update_timetable(bell, subject, specialization, day_of_week, course)
         #todo: сделать проверку,  что может он не добавляет, а изменяет расписание!
+        #if is_update:
         res = self.low_db.insert_timetable(bell, subject_id, specialization_id, day_of_week, course)
+        #else:
+        #    timetable_id = self.get_id_timetable_by_cred(speciality=specialization_id,
+        #                                                 bell_id=bell,
+        #                                                 day=day_of_week)
+        #    res = self.low_db.update_timetable(timetable_id, bell, subject_id, specialization_id, day_of_week, course)
         return res
 
     def save_subject(self, subject, teacher):
@@ -770,6 +819,25 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                 return True
         except Exception as err:
             logging.error('Error into delete delete_timetable')
+            logging.error(err)
+            return False
+
+    def update_timetable(self, timetable_id, bell, subject_id, specialization_id, day_of_week, course):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"Update timetable t " \
+                      f"set t.bell_id = {bell}, " \
+                      f"t.id_subject = {subject_id}, " \
+                      f"t.specialization_id = {specialization_id}, " \
+                      f"t.day_of_week = {day_of_week}, " \
+                      f"t.course = {course}, " \
+                      f"t.is_delete = FALSE" \
+                      f" where t.id = {timetable_id}"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete_student!')
             logging.error(err)
             return False
 
