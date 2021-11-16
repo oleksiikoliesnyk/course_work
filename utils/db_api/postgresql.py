@@ -273,7 +273,9 @@ class DatabaseForAdmin(BaseDatabase):
         return res
 
     def delete_speciality(self, id):
+        id_spec = self.low_db.select_id_spec_by_name(id)[0][0]
         res = self.low_db.delete_speciality(id)
+        res &= self.low_db.delete_course_spec(id_spec)
         return res
 
     def delete_timetable(self, speciality, day, bell_id):
@@ -732,8 +734,8 @@ class LowDatabaseForAdmin(BaseLowDatabase):
     def insert_course_spec(self, id, course):
         try:
             with self.conn.cursor() as cur:
-                sql = "Insert into course_spec(spec_id, course) " \
-                      f"values({id}, {course})"
+                sql = "Insert into course_spec(spec_id, course, is_delete) " \
+                      f"values({id}, {course}, FALSE)"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -749,6 +751,20 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                 sql = f"Update timetable " \
                       f"set is_delete = TRUE " \
                       f"where id='{id}' "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete delete_timetable')
+            logging.error(err)
+            return False
+
+    def delete_course_spec(self, spec_id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"Update course_spec " \
+                      f"set is_delete = TRUE " \
+                      f"where spec_id='{spec_id}' "
                 cur.execute(sql)
                 self.conn.commit()
                 return True
