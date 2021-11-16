@@ -169,14 +169,22 @@ class TimeTable(DefaultEssence):
         subject = data['subject']
         specialization = data['specialization']
         day_of_week = data['day_of_week']
+        course = data['course']
         flag = db_admin.save_timetable(bell=bell,
                                        subject=subject,
                                        specialization=specialization,
-                                       day_of_week=day_of_week)
+                                       day_of_week=day_of_week,
+                                       course=course)
         return flag
 
-    def delete(self):
-        pass
+    def delete(self, data):
+        speciality = data['speciality']
+        day = data['day']
+        bell_id = data['bell_id']
+        flag = db_admin.delete_timetable(speciality=speciality,
+                                         day=day,
+                                         bell_id=bell_id)
+        return flag
 
 
 class SolvingHomework(DefaultEssence):

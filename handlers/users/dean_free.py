@@ -31,6 +31,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/delete_fac - Удалить факультет',
         '/delete_subject - Удалить предмет',
         '/delete_speciality - Удалить специальность',
+        '/delete_timetable - Удалить расписание'
         '/see_bells - Просмотреть расписание звонков',
         '/see_admins - Просмотреть список админов',
         '/see_faculty - Просмотреть список факультетов',
@@ -123,10 +124,20 @@ async def set_timetable_fourth(message: types.Message, state: FSMContext):
 async def set_timetable_fifth(message: types.Message, state: FSMContext):
     specialization_name = message.text
     logging.warning(f'Специализация = {specialization_name}')
+    my_global_dict['timetable_specialization'] = specialization_name
+    await message.answer('Введите курс')
+    await DeanState.SetTimetableFifth.set()
+
+
+@dp.message_handler(state=DeanState.SetTimetableFifth)
+async def set_timetable_sixth(message: types.Message, state: FSMContext):
+    course = message.text
+    logging.warning(f'Курс = {course}')
     data_to_save = {'bell': my_global_dict['timetable_bell'],
                     'subject': my_global_dict['timetable_subject'],
-                    'specialization': specialization_name,
-                    'day_of_week': my_global_dict['timetable_day']}
+                    'specialization': my_global_dict['timetable_specialization'],
+                    'day_of_week': my_global_dict['timetable_day'],
+                    'course': course}
     my_timetable = TimeTable()
     res = my_timetable.write(data_to_save)
     if res:
@@ -149,9 +160,59 @@ async def see_timetable_second(message: types.Message, state: FSMContext):
     logging.warning(f'Название специальности, введенная пользователем: {name_of_speciality}')
     my_timetable = TimeTable()
     timetable_list = my_timetable.read(name_of_speciality)
-    for timetable in timetable_list:
-        await message.answer(timetable)
+    if timetable_list == 'Empty':
+        await message.answer('Расписания по вашей  специальности нет')
+    else:
+        for timetable in timetable_list:
+            await message.answer(timetable)
     await DeanState.FreeState.set()
+
+
+@dp.message_handler(Command('delete_timetable'), state=DeanState.FreeState)
+async def delete_timetable_first(message: types.Message, state: FSMContext):
+    logging.warning('Началась функция удаления расписания')
+    await message.answer('Введите специальность, для которой вы хотите удалить расписание')
+    await DeanState.DeleteTimeTableFirst.set()
+
+
+@dp.message_handler(state=DeanState.DeleteTimeTableFirst)
+async def delete_timetable_second(message: types.Message, state: FSMContext):
+    speciality = message.text
+    my_global_dict['delete_timetable_speciality'] = speciality
+    await message.answer('Введите день недели')
+    await DeanState.DeleteTimeTableSecond.set()
+
+
+@dp.message_handler(state=DeanState.DeleteTimeTableSecond)
+async def delete_timetable_third(message: types.Message, state: FSMContext):
+    day = message.text
+    my_global_dict['delete_timetable_day'] = day
+    if day not in ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'):
+        await message.answer('Введен неверный день недели, переход в свободный режим')
+        await DeanState.FreeState.set()
+    await message.answer('Введите номер пары')
+    await DeanState.DeleteTimeTableThird.set()
+
+
+@dp.message_handler(state=DeanState.DeleteTimeTableThird)
+async def delete_timetable_fourth(message: types.Message, state: FSMContext):
+    bell_id = message.text
+    data_to_delete = {
+        'speciality': my_global_dict['delete_timetable_speciality'],
+        'day': my_global_dict['delete_timetable_day'],
+        'bell_id': bell_id
+    }
+    try:
+        my_timetable = TimeTable()
+        flag = my_timetable.delete(data_to_delete)
+        if flag:
+            await message.answer('Расписание успешно удалено!')
+        else:
+            await message.answer('Расписание не было удалено!')
+            await DeanState.FreeState.set()
+    except Exception as err:
+        await message.answer(f'Ошибка при удалении расписания = {err}')
+        await DeanState.FreeState.set()
 
 
 @dp.message_handler(Command('delete_subject'), state=DeanState.FreeState)
@@ -430,10 +491,13 @@ async def see_speciality(message: types.Message, state: FSMContext):
     await message.answer('Выводим все специальности...')
     my_speciality = Speciality()
     list_of_speciality = my_speciality.read()
-    logging.warning(f'Получен ответ от модуля Speciality. list_of_speciality = {list_of_speciality}')
-    for spec in list_of_speciality:
-        await message.answer(spec)
-    logging.warning('Конец функции see_speciality')
+    if list_of_speciality == 'Empty':
+        await message.answer('Список специальностей пуст')
+    else:
+        logging.warning(f'Получен ответ от модуля Speciality. list_of_speciality = {list_of_speciality}')
+        for spec in list_of_speciality:
+            await message.answer(spec)
+        logging.warning('Конец функции see_speciality')
 
 
 @dp.message_handler(Command('see_student'), state=DeanState.FreeState)
@@ -659,13 +723,13 @@ async def set_new_student_third(message: types.Message, state: FSMContext):
                     "full_name": full_name,
                     "password": my_global_dict['password_new_student'],
                     "course": my_global_dict['course_new_student'],
-                    "id_spec": my_global_dict['spec_new_student'] }
+                    "id_spec": my_global_dict['spec_new_student']}
     try:
         logger_message = f"name = {my_global_dict['name_new_student']}, \n" \
-                       f" 'full_name = {full_name}, \n" \
-                       f" password = {my_global_dict['password_new_student']},\n " \
-                       f" course = {my_global_dict['course_new_student']},\n " \
-                       f" id_spec = {my_global_dict['spec_new_student']}' \n"
+                         f" 'full_name = {full_name}, \n" \
+                         f" password = {my_global_dict['password_new_student']},\n " \
+                         f" course = {my_global_dict['course_new_student']},\n " \
+                         f" id_spec = {my_global_dict['spec_new_student']}' \n"
         logging.warning(logger_message)
         res = my_student.write(student_data)
         if res:

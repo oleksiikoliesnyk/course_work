@@ -2,6 +2,8 @@ import logging
 
 import psycopg2
 
+from data.global_conf import COUNT_OF_COURSES
+
 
 class BaseDatabase:
     def __init__(self):
@@ -61,12 +63,15 @@ class BaseDatabase:
 
     def get_timetable(self, speciality):
         all_timetable = self.low_db.select_timetable(speciality)
+        if not all_timetable:
+            return 'Empty'
         res = list()
         for timetable in all_timetable:
             res_string = f'День недели = {timetable[0]},\n' \
-                         f'Номер пары = {timetable[1]}, \n' \
-                         f'Специальность = {timetable[2]},\n' \
-                         f'Название предмета = {timetable[3]}'
+                         f'Курс = {timetable[1]},\n' \
+                         f'Номер пары = {timetable[2]}, \n' \
+                         f'Специальность = {timetable[3]},\n' \
+                         f'Название предмета = {timetable[4]}'
             res.append(res_string)
         return res
 
@@ -77,6 +82,8 @@ class BaseDatabase:
 
     def get_speciality(self):
         specialityes = self.low_db.select_specialization()
+        if not specialityes:
+            return 'Empty'
         res = list()
         for spec in specialityes:
             res_string = f'Специальность:  {spec[0]} \n' \
@@ -175,6 +182,10 @@ class BaseDatabase:
         if res:
             return res[0][0]
 
+    def get_id_timetable_by_cred(self, speciality, day, bell_id):
+        res = self.low_db.select_id_timetable(speciality, day, bell_id)[0][0]
+        return res
+
 
 class DatabaseForAdmin(BaseDatabase):
 
@@ -201,11 +212,11 @@ class DatabaseForAdmin(BaseDatabase):
                                        full_name=full_name)
         return res
 
-    def save_timetable(self, bell, subject, specialization, day_of_week):
+    def save_timetable(self, bell, subject, specialization, day_of_week, course):
         subject_id = self.low_db.select_subjectid_by_name(subject)[0][0]
         specialization_id = self.low_db.select_specializationid_by_name(specialization)[0][0]
         #todo: сделать проверку,  что может он не добавляет, а изменяет расписание!
-        res = self.low_db.insert_timetable(bell, subject_id, specialization_id, day_of_week)
+        res = self.low_db.insert_timetable(bell, subject_id, specialization_id, day_of_week, course)
         return res
 
     def save_subject(self, subject, teacher):
@@ -235,6 +246,10 @@ class DatabaseForAdmin(BaseDatabase):
     def save_specialization(self, name, fac_id):
         res = self.low_db.insert_specialization(name=name,
                                                 id=fac_id)
+        if res:
+            id = self.low_db.select_specializationid_by_name(name)[0][0]
+            for i in range(COUNT_OF_COURSES):
+                res &= self.low_db.insert_course_spec(id, course=i+1)
         return res
 
     def delete_student(self, id):
@@ -258,7 +273,17 @@ class DatabaseForAdmin(BaseDatabase):
         return res
 
     def delete_speciality(self, id):
-        res  = self.low_db.delete_speciality(id)
+        id_spec = self.low_db.select_id_spec_by_name(id)[0][0]
+        res = self.low_db.delete_speciality(id)
+        res &= self.low_db.delete_course_spec(id_spec)
+        return res
+
+    def delete_timetable(self, speciality, day, bell_id):
+        spec_id = self.low_db.select_id_spec_by_name(speciality)[-1][0]
+        timetable_id = self.get_id_timetable_by_cred(speciality=spec_id,
+                                                    day=day,
+                                                    bell_id=bell_id)
+        res = self.low_db.delete_timetable(timetable_id)
         return res
 
 
@@ -452,7 +477,7 @@ class BaseLowDatabase:
 
     def select_timetable(self, speciality):
         with self.conn.cursor() as cur:
-            sql = 'Select t.day_of_week, t.bell_id, s.name, sbj.name ' \
+            sql = 'Select t.day_of_week, t.course, t.bell_id, s.name, sbj.name ' \
                   ' from timetable t ' \
                   'inner join speciality s on s.id = t.specialization_id ' \
                   'inner join subject sbj on sbj.id = t.id_subject ' \
@@ -475,6 +500,15 @@ class BaseLowDatabase:
             sql = 'Select s.id ' \
                   'from speciality s ' \
                   f"where s.name = '{specialization}' and s.is_delete<>TRUE "
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_id_timetable(self, speciality, day, bell_id):
+        with self.conn.cursor() as cur:
+            sql = 'Select t.id ' \
+                  'from timetable t ' \
+                  f"where t.specialization_id = '{speciality}' and t.day_of_week = '{day}' and t.bell_id = {bell_id} and t.is_delete<>TRUE "
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -683,11 +717,11 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error(err)
             return False
 
-    def insert_timetable(self, bell, subject, specialization, day_of_week):
+    def insert_timetable(self, bell, subject, specialization, day_of_week, course):
         try:
             with self.conn.cursor() as cur:
-                sql = "Insert into timetable(bell_id, id_subject, specialization_id, day_of_week) " \
-                      f"values({bell}, {subject}, {specialization}, '{day_of_week}')"
+                sql = "Insert into timetable(bell_id, id_subject, specialization_id, day_of_week, course) " \
+                      f"values({bell}, {subject}, {specialization}, '{day_of_week}', '{course}')"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -697,7 +731,47 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             self.conn.rollback()
             return False
 
+    def insert_course_spec(self, id, course):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "Insert into course_spec(spec_id, course, is_delete) " \
+                      f"values({id}, {course}, FALSE)"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_timetable!')
+            logging.error(err)
+            self.conn.rollback()
+            return False
 
+    def delete_timetable(self, id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"Update timetable " \
+                      f"set is_delete = TRUE " \
+                      f"where id='{id}' "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete delete_timetable')
+            logging.error(err)
+            return False
+
+    def delete_course_spec(self, spec_id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"Update course_spec " \
+                      f"set is_delete = TRUE " \
+                      f"where spec_id='{spec_id}' "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete delete_timetable')
+            logging.error(err)
+            return False
 
 
 class LowDatabaseForTeacher(BaseLowDatabase):
