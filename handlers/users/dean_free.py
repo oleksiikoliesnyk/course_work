@@ -168,6 +168,53 @@ async def see_timetable_second(message: types.Message, state: FSMContext):
     await DeanState.FreeState.set()
 
 
+@dp.message_handler(Command('delete_timetable'), state=DeanState.FreeState)
+async def delete_timetable_first(message: types.Message, state: FSMContext):
+    logging.warning('Началась функция удаления расписания')
+    await message.answer('Введите специальность, для которой вы хотите удалить расписание')
+    await DeanState.DeleteTimeTableFirst.set()
+
+
+@dp.message_handler(state=DeanState.DeleteTimeTableFirst)
+async def delete_timetable_second(message: types.Message, state: FSMContext):
+    speciality = message.text
+    my_global_dict['delete_timetable_speciality'] = speciality
+    await message.answer('Введите день недели')
+    await DeanState.DeleteTimeTableSecond.set()
+
+
+@dp.message_handler(state=DeanState.DeleteTimeTableSecond)
+async def delete_timetable_third(message: types.Message, state: FSMContext):
+    day = message.text
+    my_global_dict['delete_timetable_day'] = day
+    if day not in ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'):
+        await message.answer('Введен неверный день недели, переход в свободный режим')
+        await DeanState.FreeState.set()
+    await message.answer('Введите номер пары')
+    await DeanState.DeleteTimeTableThird.set()
+
+
+@dp.message_handler(state=DeanState.DeleteTimeTableThird)
+async def delete_timetable_fourth(message: types.Message, state: FSMContext):
+    bell_id = message.text
+    data_to_delete = {
+        'speciality': my_global_dict['delete_timetable_speciality'],
+        'day': my_global_dict['delete_timetable_day'],
+        'bell_id': bell_id
+    }
+    try:
+        my_timetable = TimeTable()
+        flag = my_timetable.delete(data_to_delete)
+        if flag:
+            await message.answer('Расписание успешно удалено!')
+        else:
+            await message.answer('Расписание не было удалено!')
+            await DeanState.FreeState.set()
+    except Exception as err:
+        await message.answer(f'Ошибка при удалении расписания = {err}')
+        await DeanState.FreeState.set()
+
+
 @dp.message_handler(Command('delete_subject'), state=DeanState.FreeState)
 async def delete_subject(message: types.Message, state: FSMContext):
     logging.warning('Началась функция удаления предмета')

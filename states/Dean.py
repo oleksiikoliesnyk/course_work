@@ -36,4 +36,9 @@ class DeanState(StatesGroup):
     SetTimetableThird = State()
     SetTimetableFourth = State()
     SetTimetableFifth = State()
+    DeleteTimeTableFirst = State()
+    DeleteTimeTableSecond = State()
+    DeleteTimeTableThird = State()
+    DeleteTimeTableFourth = State()
+
 

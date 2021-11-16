@@ -182,6 +182,10 @@ class BaseDatabase:
         if res:
             return res[0][0]
 
+    def get_id_timetable_by_cred(self, speciality, day, bell_id):
+        res = self.low_db.select_id_timetable(speciality, day, bell_id)[0][0]
+        return res
+
 
 class DatabaseForAdmin(BaseDatabase):
 
@@ -269,7 +273,15 @@ class DatabaseForAdmin(BaseDatabase):
         return res
 
     def delete_speciality(self, id):
-        res  = self.low_db.delete_speciality(id)
+        res = self.low_db.delete_speciality(id)
+        return res
+
+    def delete_timetable(self, speciality, day, bell_id):
+        spec_id = self.low_db.select_id_spec_by_name(speciality)[-1][0]
+        timetable_id = self.get_id_timetable_by_cred(speciality=spec_id,
+                                                    day=day,
+                                                    bell_id=bell_id)
+        res = self.low_db.delete_timetable(timetable_id)
         return res
 
 
@@ -486,6 +498,15 @@ class BaseLowDatabase:
             sql = 'Select s.id ' \
                   'from speciality s ' \
                   f"where s.name = '{specialization}' and s.is_delete<>TRUE "
+            cur.execute(sql)
+            query_results = cur.fetchall()
+            return query_results
+
+    def select_id_timetable(self, speciality, day, bell_id):
+        with self.conn.cursor() as cur:
+            sql = 'Select t.id ' \
+                  'from timetable t ' \
+                  f"where t.specialization_id = '{speciality}' and t.day_of_week = '{day}' and t.bell_id = {bell_id} and t.is_delete<>TRUE "
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -720,6 +741,20 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error('Error into insert_timetable!')
             logging.error(err)
             self.conn.rollback()
+            return False
+
+    def delete_timetable(self, id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"Update timetable " \
+                      f"set is_delete = TRUE " \
+                      f"where id='{id}' "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into delete delete_timetable')
+            logging.error(err)
             return False
 
 
