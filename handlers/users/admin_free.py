@@ -582,7 +582,9 @@ async def get_faculty_by_spec_first(message: types.Message, state: FSMContext):
 async def get_faculty_by_spec_first(message: types.Message, state: FSMContext):
     my_spec = message.text
     logging.warning(f'Получен ответ от пользователя. Специальность = {my_spec}')
-    res = db.get_facultyes_by_spec(my_spec)
+    my_faculty = Faculty()
+    res = my_faculty.read_by_speciality(my_spec)
+    #res = db.get_facultyes_by_spec(my_spec)
     logging.warning(f'Получен ответ от модуля db. res = {res}')
     await message.answer(res)
     await DeanState.FreeState.set()

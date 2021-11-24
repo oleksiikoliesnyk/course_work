@@ -194,6 +194,11 @@ class BaseDatabase:
                      f'Время конца = {res[2]}'
         return res_string
 
+    def get_facultyes_by_spec(self, my_spec):
+        my_fac = self.low_db.select_fac_by_spec(my_spec)
+        res_string = f'Факультет по специальности {my_spec} = {my_fac[0][0]}'
+        return res_string
+
 
 class DatabaseForAdmin(BaseDatabase):
 
@@ -578,6 +583,20 @@ class BaseLowDatabase:
                 query_results = cur.fetchall()
         except Exception as err:
             logging.error('Error in select_teacher_by_cred')
+            logging.error(err)
+            return False
+        return query_results
+
+    def select_fac_by_spec(self, my_spec):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'select f.name from speciality s ' \
+                      'inner join faculty f on f.id = s.id_fac ' \
+                      f"where s.name='{my_spec}' and s.is_delete <> TRUE;"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_fac_by_spec')
             logging.error(err)
             return False
         return query_results

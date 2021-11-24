@@ -38,6 +38,10 @@ class Faculty(DefaultEssence):
         flag = db_admin.delete_faculty(id)
         return flag
 
+    def read_by_speciality(self, speciality):
+        res = db_admin.get_facultyes_by_spec(speciality)
+        return res
+
 
 class Speciality(DefaultEssence):
     def read(self):
