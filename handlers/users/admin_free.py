@@ -21,7 +21,7 @@ from utils.db_api.test_postgtes import query_results
 async def first_dean_free_function(message: types.Message, state: FSMContext):
     text = [
         'Список команд: ',
-        '/add_subject {ИмяПреподавателя} {НазваниеПредмета} - Добавить преподавателю новый предмет',
+        '/add_subject - Добавить преподавателю новый предмет',
         '/add_speciality_for_teacher - Добавить преподавателя на новую специальность',
         '/set_bells - Изменить расписание звонков',
         '/help - Получить справку',
@@ -57,27 +57,36 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(Command('add_subject'), state=DeanState.FreeState)
-async def add_subject(message: types.Message, state: FSMContext):
+async def add_subject_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции add_subject')
-    try:
-        teacher, subject = message.get_args().split(' ')
-        logging.warning(f'Получили аргументы. Учитель - {teacher}, предмет - {subject}')
-        await message.answer(f'Добаляю преподавателю {teacher} предмет {subject}')
-        data_to_save = {'teacher': teacher,
-                        'subject': subject}
-        my_subject = Subject()
-        res = my_subject.write(data_to_save)
-        logging.warning(f'Пришет ответ от модуля db. res = {res}')
-        if isinstance(res, dict):  # если пришел в ответ словарь, значит какая-то ошибка
-            await message.answer(f'Возникла проблема. А именно: {res["message"]}')
-        elif res:
-            await message.answer(f'Преподавателю {teacher} успешно добавлен предмет {subject}!')
-    except ValueError as err:
-        await message.answer(f'Ошибка - {err}')
-        await message.answer('Вероятнее всего вы не указали аргументы - имя преподавателя и название предмета'
-                             'через пробел')
-    logging.warning('Конец функции add_subject')
+    await message.answer('Введите имя преподавателя')
+    await DeanState.AddSubjectFirst.set()
 
+
+@dp.message_handler(state=DeanState.AddSubjectFirst)
+async def add_subject_second(message: types.Message, state: FSMContext):
+    teacher_name = message.text
+    my_global_dict['add_subject_teacher_name'] = teacher_name
+    await message.answer('Введите название нового предмета')
+    await DeanState.AddSubjectSecond.set()
+
+
+@dp.message_handler(state=DeanState.AddSubjectSecond)
+async def add_subject_second(message: types.Message, state: FSMContext):
+    new_subject_name = message.text
+    try:
+        teacher_name = my_global_dict['add_subject_teacher_name']
+        data_to_write = {'teacher': teacher_name,
+                         'subject': new_subject_name}
+        my_subject = Subject()
+        res = my_subject.write(data_to_write)
+        if res:
+            await message.answer('Предмет добавлен успешно!')
+        else:
+            await message.answer('Предмет не был добавлен!')
+    except Exception as err:
+        await message.answer(f'Ошибка в добавлении нового преподавателя - {err}')
+    await DeanState.FreeState.set()
 
 @dp.message_handler(Command('set_timetable'), state=DeanState.FreeState)
 async def set_timetable_first(message: types.Message, state: FSMContext):

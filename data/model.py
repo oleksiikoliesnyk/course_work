@@ -119,8 +119,9 @@ class Subject(DefaultEssence):
     def write(self, data):
         teacher = data['teacher']
         subject = data['subject']
-        db_admin.save_subject(teacher=teacher,
-                              subject=subject)
+        flag = db_admin.save_subject(teacher=teacher,
+                                     subject=subject)
+        return flag
 
     def delete(self, name):
         flag = db_admin.delete_subject(name)

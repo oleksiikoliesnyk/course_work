@@ -40,5 +40,8 @@ class DeanState(StatesGroup):
     DeleteTimeTableSecond = State()
     DeleteTimeTableThird = State()
     DeleteTimeTableFourth = State()
+    AddSubjectFirst = State()
+    AddSubjectSecond = State()
+
 
 
