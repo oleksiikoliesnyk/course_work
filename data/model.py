@@ -167,6 +167,10 @@ class Homework(DefaultEssence):
     def delete(self):
         pass
 
+    def read_by_student(self, student):
+        result = db_admin.get_homework_by_student(student)
+        return result
+
 
 class TimeTable(DefaultEssence):
     def read(self, speciality):

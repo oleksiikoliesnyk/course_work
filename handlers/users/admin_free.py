@@ -8,7 +8,7 @@ from aiogram.types import CallbackQuery
 
 from data.db_constant import facultys
 from data.global_conf import my_global_dict
-from data.model import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable
+from data.model import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable, Homework
 from keyboards.inline.faculty_button.faculty_button import fac_choice
 from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
@@ -603,9 +603,12 @@ async def get_homework_by_student_first(message: types.Message, state: FSMContex
 async def get_homework_by_student_second(message: types.Message, state: FSMContext):
     my_student = message.text
     logging.warning(f'Получен ответ от пользователя. Студент = {my_student}')
-    res = db.get_homework_by_student(my_student)
-    logging.warning(f'Получен ответ от модуля db. res = {res}')
-    await message.answer(res)
+    my_homework = Homework()
+    res = my_homework.read_by_student(my_student)
+    #res = db.get_homework_by_student(my_student)
+    logging.warning(f'Получен ответ от модуля Homework. res = {res}')
+    for i in res:
+        await message.answer(i)
     await DeanState.FreeState.set()
     logging.warning('Конец функции see_homework_by_student')
 

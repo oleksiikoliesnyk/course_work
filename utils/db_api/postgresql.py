@@ -10,6 +10,16 @@ class BaseDatabase:
     def __init__(self):
         self.low_db = BaseLowDatabase()
 
+    def get_homework_by_student(self, my_student):
+        res = self.low_db.select_homework_by_student(my_student)
+        res_list = list()
+        for i in res:
+            res_string = f'Текст домашнего задания = {i[0]},\n' \
+                         f'Дополнение к домашнему заданию = {i[1]},\n' \
+                         f'Текущий статус задачи = {i[2]}'
+            res_list.append(res_string)
+        return res_list
+
     def get_students(self):
         students = self.low_db.select_student()
         res = []
@@ -593,6 +603,22 @@ class BaseLowDatabase:
                 sql = 'select f.name from speciality s ' \
                       'inner join faculty f on f.id = s.id_fac ' \
                       f"where s.name='{my_spec}' and s.is_delete <> TRUE;"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_fac_by_spec')
+            logging.error(err)
+            return False
+        return query_results
+
+    def select_homework_by_student(self, my_student):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'select t.task, t.addition, h.status ' \
+                      'from homework h ' \
+                      'inner join task t on h.task_id=t.id ' \
+                      'inner join student s on h.id_student=s.id ' \
+                      f"where s.name = '{my_student}' or s.full_name = '{my_student}' "
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
