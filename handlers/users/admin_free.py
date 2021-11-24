@@ -88,6 +88,7 @@ async def add_subject_second(message: types.Message, state: FSMContext):
         await message.answer(f'Ошибка в добавлении нового преподавателя - {err}')
     await DeanState.FreeState.set()
 
+
 @dp.message_handler(Command('set_timetable'), state=DeanState.FreeState)
 async def set_timetable_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции set_timetable')
@@ -558,9 +559,13 @@ async def select_custom_bell_first(message: types.Message, state: FSMContext):
 async def select_custom_bell_second(message: types.Message, state: FSMContext):
     my_id = message.text
     logging.warning(f'Получен ответ от пользователя. Номер пары = {my_id}')
-    res = db.get_bells_by_id(my_id)
-    logging.warning(f'Получен ответ от модуля db. res = {res}')
-    await message.answer(f'Время начала {my_id}-ой пары: {res[0][1]}. Время конца: {res[0][2]}')
+    try:
+        my_bell = Bell()
+        res = my_bell.read_by_id(my_id)
+        logging.warning(f'Получен ответ от модуля Bell. res = {res}')
+        await message.answer(res)
+    except Exception as err:
+        await message.answer(f'Ошибка = {err}')
     await DeanState.FreeState.set()
     logging.warning('Конец функции see_specific_bell')
 

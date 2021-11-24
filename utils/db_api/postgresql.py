@@ -187,6 +187,13 @@ class BaseDatabase:
         res = self.low_db.select_id_timetable(speciality, day, bell_id)[0][0]
         return res
 
+    def get_bells_by_id(self, my_id):
+        res = self.low_db.select_bells_by_id(my_id)[0]
+        res_string = f'Пара номер = {res[0]},\n' \
+                     f'Время начала = {res[1]},\n' \
+                     f'Время конца = {res[2]}'
+        return res_string
+
 
 class DatabaseForAdmin(BaseDatabase):
 
@@ -561,6 +568,19 @@ class BaseLowDatabase:
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
+
+    def select_bells_by_id(self, my_id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'Select * from bell b ' \
+                      f"where b.id = '{my_id}';"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_teacher_by_cred')
+            logging.error(err)
+            return False
+        return query_results
 
 
 class LowDatabaseForAdmin(BaseLowDatabase):

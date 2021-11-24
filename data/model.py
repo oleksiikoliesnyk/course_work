@@ -148,6 +148,10 @@ class Bell(DefaultEssence):
         list_of_bells = db_admin.get_bells()
         return list_of_bells
 
+    def read_by_id(self, my_id):
+        res = db_admin.get_bells_by_id(my_id)
+        return res
+
 
 class Homework(DefaultEssence):
     def read(self):
