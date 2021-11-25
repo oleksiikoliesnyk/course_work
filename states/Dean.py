@@ -42,6 +42,12 @@ class DeanState(StatesGroup):
     DeleteTimeTableFourth = State()
     AddSubjectFirst = State()
     AddSubjectSecond = State()
+    WriteHomeWorkToStudentFirst = State()
+    WriteHomeWorkToStudentTaskFirst = State()
+    WriteHomeWorkToStudentTaskSecond = State()
+    WriteHomeWorkToStudentSecond = State()
+    WriteHomeWorkToStudentThird = State()
+    WriteHomeWorkToStudentFourth = State()
 
 
 

@@ -161,8 +161,18 @@ class Homework(DefaultEssence):
     def read(self):
         pass
 
-    def write(self):
-        pass
+    ####
+    # {'task_id': my_global_dict['task_id_for_new_homework'],
+    # 'subject_name': my_global_dict['subject_name_new_homework'],
+    # 'student_name': student_name}
+    def write(self, data):
+        task_id = data['task_id']
+        subject_name = data['subject_name']
+        student_name = data['student_name']
+        flag = db_admin.save_homework(task_id=task_id,
+                                      subject_name=subject_name,
+                                      student_name=student_name)
+        return flag
 
     def delete(self):
         pass
