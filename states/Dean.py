@@ -2,6 +2,8 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 class DeanState(StatesGroup):
+    WriteHomeWorkToStudentSixth = State()
+    WriteHomeWorkToStudentFifth = State()
     FreeState = State()
     ChangeBellFirst = State()
     ChangeBellSecond = State()

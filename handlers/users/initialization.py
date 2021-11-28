@@ -18,7 +18,7 @@ async def bot_start(message: types.Message):
                                                             username=message.from_user.username)
         if user:
             if specialization == 'dean':
-                await message.answer('Вы вошли как декан')
+                await message.answer('Вы вошли как админ')
                 await DeanState.FreeState.set()
             elif specialization == 'teacher':
                 await message.answer('Тут выполнится машина состояний для преподавателя')

@@ -60,19 +60,12 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('appoint_homework_to_student'), state=DeanState.FreeState)
 async def add_homework_to_student(message: types.Message, state: FSMContext):
     logging.warning('Начало функции add_homework_to_student')
-    await message.answer('Вы хотите добавить новое домашнее задание или использовать предыдущее?')
-    await message.answer('ТУТ БУДЕТ КНОПКА')
+    await message.answer('Введите текст нового задания')
     await DeanState.WriteHomeWorkToStudentFirst.set()
 
 
-@dp.message_handler('Новое', state=DeanState.WriteHomeWorkToStudentFirst)
-async def add_homeworktask_to_student_first(message: types.Message, state: FSMContext):
-    await message.answer('Введите текст нового задания')
-    await DeanState.WriteHomeWorkToStudentTaskFirst.set()
-
-
-@dp.message_handler(state=DeanState.WriteHomeWorkToStudentTaskFirst)
-async def add_homeworktask_to_student_second(message: types.Message, state: FSMContext):
+@dp.message_handler(state=DeanState.WriteHomeWorkToStudentFirst)
+async def add_homework_to_student_second(message: types.Message, state: FSMContext):
     my_global_dict['new_task_for_student'] = message.text
     await message.answer('Введите дополнение к этому заданию')
     await DeanState.WriteHomeWorkToStudentTaskSecond.set()
@@ -80,17 +73,18 @@ async def add_homeworktask_to_student_second(message: types.Message, state: FSMC
 
 @dp.message_handler(state=DeanState.WriteHomeWorkToStudentTaskSecond)
 async def add_homeworktask_to_student_third(message: types.Message, state: FSMContext):
-    addition = message.text
+    new_task_addition = message.text
     try:
         data_to_save = {'task': my_global_dict['new_task_for_student'],
-                        'addition': addition}
+                        'addition': new_task_addition}
         my_task = Task()
-        res, task_id = my_task.write(data_to_save)
+        res = my_task.write(data_to_save)
+        task_id = my_task.read_id_by_name(my_global_dict['new_task_for_student'])
         if res:
             await message.answer('Задание было успешно сохранено, процесс назначения домашнего задания продолжается')
             my_global_dict['task_id_for_new_homework'] = task_id
             await message.answer('Введите предмет, по которому будет задано это задание')
-            await DeanState.WriteHomeWorkToStudentSecond.set()
+            await DeanState.WriteHomeWorkToStudentThird.set()
         else:
             await message.answer('Задание не было сохранено. Переход в стандартный режим')
             await DeanState.FreeState.set()
@@ -99,14 +93,14 @@ async def add_homeworktask_to_student_third(message: types.Message, state: FSMCo
         await message.answer(f'Вы будете перекинуты в свободный режим')
 
 
-@dp.message_handler(state=DeanState.WriteHomeWorkToStudentSecond)
+@dp.message_handler(state=DeanState.WriteHomeWorkToStudentThird)
 async def add_homework_to_student_second(message: types.Message, state: FSMContext):
     my_global_dict['subject_name_new_homework'] = message.text
     await message.answer('Введите имя студента, на которого вы хотите назначить дз')
-    await DeanState.WriteHomeWorkToStudentThird.set()
+    await DeanState.WriteHomeWorkToStudentFourth.set()
 
 
-@dp.message_handler(state=DeanState.WriteHomeWorkToStudentThird)
+@dp.message_handler(state=DeanState.WriteHomeWorkToStudentFourth)
 async def add_homework_to_student_third(message: types.Message, state: FSMContext):
     student_name = message.text
     try:
@@ -532,7 +526,7 @@ async def see_bells(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('see_admins'), state=DeanState.FreeState)
 async def see_bells(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_admins')
-    await message.answer('Выводим список деканов...')
+    await message.answer('Выводим список админов...')
     my_admin = Admin()
     admins = my_admin.read()
     logging.warning(f'Получен ответ от модуля Admins. admins = {admins}')

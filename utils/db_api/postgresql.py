@@ -10,6 +10,10 @@ class BaseDatabase:
     def __init__(self):
         self.low_db = BaseLowDatabase()
 
+    def get_subject_id_by_name(self, subject_name):
+        res = self.low_db.select_subject_id_by_name(subject_name)[0][0]
+        return res
+
     def get_homework_by_student(self, my_student):
         res = self.low_db.select_homework_by_student(my_student)
         res_list = list()
@@ -215,6 +219,29 @@ class DatabaseForAdmin(BaseDatabase):
     def __init__(self):
         self.low_db = LowDatabaseForAdmin()
 
+    def save_homework(self, task_id, student_name, subject_name):
+        try:
+            student_id = self.get_student_id_by_name(student_name)
+            subject_id = self.get_subject_id_by_name(subject_name)
+            if student_id and subject_id:
+                res = self.low_db.insert_homewrok(student_id, subject_id, task_id)
+                return res
+            else:
+                return False
+        except Exception as err:
+            return False
+
+    def get_task_id_by_name(self, task):
+        res = self.low_db.select_task_id_by_name(task)[0][0]
+        return res
+
+    def save_task(self, task, addition):
+        try:
+            res = self.low_db.insert_task(task, addition)
+            return res
+        except Exception as err:
+            return False
+
     def save_teacher(self, full_name, name, password):
         res = self.low_db.insert_teacher(full_name=full_name,
                                          name=name,
@@ -400,7 +427,8 @@ class BaseLowDatabase:
 
     def select_bells(self):
         with self.conn.cursor() as cur:
-            sql = 'Select * from bell;'
+            sql = 'Select * from bell ' \
+                  'order by id;'
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -439,7 +467,7 @@ class BaseLowDatabase:
 
     def select_homework(self):
         with self.conn.cursor() as cur:
-            sql = 'select h.status as "Статус задания", s.name as "Название предмета", std.username as "Имя студента", ' \
+            sql = 'select h.status as "Статус задания", s.name as "Название предмета", std.name as "Имя студента", ' \
                   't.task as "Название задачи", t.addition as "Условие задачи" ' \
                   'from homework h ' \
                   'inner join subject s on s.id = h.id_subject ' \
@@ -487,7 +515,8 @@ class BaseLowDatabase:
         try:
             with self.conn.cursor() as cur:
                 sql = 'Select * from teacher ' \
-                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}'"
+                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}' " \
+                      f"and is_delete<>TRUE"
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
@@ -500,7 +529,8 @@ class BaseLowDatabase:
         try:
             with self.conn.cursor() as cur:
                 sql = 'Select * from student ' \
-                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}'"
+                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}' " \
+                      f" and is_delete<>TRUE"
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
@@ -513,7 +543,8 @@ class BaseLowDatabase:
         try:
             with self.conn.cursor() as cur:
                 sql = 'Select * from admin ' \
-                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}'"
+                      f"where name = '{name}' and full_name = '{full_name}' and password = '{password}' " \
+                      f"and is_delete<>TRUE"
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
@@ -622,7 +653,35 @@ class BaseLowDatabase:
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
-            logging.error('Error in select_fac_by_spec')
+            logging.error('Error in select_homework_by_student')
+            logging.error(err)
+            return False
+        return query_results
+
+    def select_task_id_by_name(self, task):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'select t.id ' \
+                      'from task t ' \
+                    f"where t.task = '{task}'and t.is_delete<>TRUE "
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_task_id_by_name')
+            logging.error(err)
+            return False
+        return query_results
+
+    def select_subject_id_by_name(self, subject_name):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'select s.id ' \
+                      'from subject s ' \
+                    f"where s.name = '{subject_name}' and s.is_delete<>TRUE "
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_subject_id_by_name')
             logging.error(err)
             return False
         return query_results
@@ -794,7 +853,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             with self.conn.cursor() as cur:
                 sql = f"Update admin " \
                       f"set is_delete = TRUE " \
-                      f"where name='{name}' "
+                      f"where name='{name}' or full_name = '{name}' "
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -905,6 +964,36 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error('Error into delete_student!')
             logging.error(err)
             return False
+
+    def insert_homewrok(self, student_id, subject_id, task_id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "Insert into homework(id_student,id_subject,status,task_id, is_delete) " \
+                        f"values({student_id}, {subject_id}, 'assigned', {task_id}, FALSE)"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_timetable!')
+            logging.error(err)
+            self.conn.rollback()
+            return False
+
+    def insert_task(self, task, addition):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "Insert into task(task,addition, is_delete) " \
+                        f"values('{task}', '{addition}', FALSE)"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_task!')
+            logging.error(err)
+            self.conn.rollback()
+            return False
+
+
 
 
 class LowDatabaseForTeacher(BaseLowDatabase):

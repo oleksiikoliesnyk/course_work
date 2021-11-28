@@ -109,10 +109,18 @@ class Task(DefaultEssence):
         pass
 
     def write(self, data):
-        pass
+        task = data['task']
+        addition = data['addition']
+        res = db_admin.save_task(task=task,
+                                 addition=addition)
+        return res
 
     def delete(self):
         pass
+
+    def read_id_by_name(self, task):
+        task_id = db_admin.get_task_id_by_name(task)
+        return task_id
 
 
 class Subject(DefaultEssence):
@@ -161,10 +169,6 @@ class Homework(DefaultEssence):
     def read(self):
         pass
 
-    ####
-    # {'task_id': my_global_dict['task_id_for_new_homework'],
-    # 'subject_name': my_global_dict['subject_name_new_homework'],
-    # 'student_name': student_name}
     def write(self, data):
         task_id = data['task_id']
         subject_name = data['subject_name']
