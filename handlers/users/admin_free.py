@@ -8,7 +8,7 @@ from aiogram.types import CallbackQuery
 
 from data.db_constant import facultys
 from data.global_conf import my_global_dict
-from data.model import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable, Homework, Task
+from data.controller import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable, Homework, Task
 from keyboards.inline.faculty_button.faculty_button import fac_choice
 from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
@@ -121,6 +121,7 @@ async def add_homework_to_student_third(message: types.Message, state: FSMContex
 @dp.message_handler(Command('add_subject'), state=DeanState.FreeState)
 async def add_subject_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции add_subject')
+    await see_teacher(message, state)
     await message.answer('Введите имя преподавателя')
     await DeanState.AddSubjectFirst.set()
 
@@ -536,7 +537,7 @@ async def see_bells(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(Command('see_faculty'), state=DeanState.FreeState)
-async def see_bells(message: types.Message, state: FSMContext):
+async def see_faculty(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_faculty')
     await message.answer('Выводим список факультетов...')
     my_faculty = Faculty()
@@ -731,6 +732,7 @@ async def set_spec_first(message: types.Message, state: FSMContext):
 @dp.message_handler(state=DeanState.SetSpecFirst)
 async def set_spec_second(message: types.Message, state: FSMContext):
     my_global_dict['name_new_spec'] = message.text
+    await see_faculty(message, state)
     await message.answer('Введите название факультета, к которому относится специальность')
     await DeanState.SetSpecSecond.set()
 
