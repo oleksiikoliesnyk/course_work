@@ -8,6 +8,7 @@ from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
 from loader import dp, db_admin as db
 from states.Dean import DeanState
+from states.Student import StudentState
 
 
 @dp.message_handler(CommandStart())
@@ -23,7 +24,8 @@ async def bot_start(message: types.Message):
             elif specialization == 'teacher':
                 await message.answer('Тут выполнится машина состояний для преподавателя')
             else:
-                await message.answer('Тут выполнится машина состояний для студента')
+                await message.answer('Вы вошли как студент')
+                await StudentState.FreeState.set()
         else:
             await message.answer('Приветствуем, новый пользователь!')
             await message.answer('Какая ваша роль?', reply_markup=type_choice)

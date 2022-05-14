@@ -219,6 +219,10 @@ class DatabaseForAdmin(BaseDatabase):
     def __init__(self):
         self.low_db = LowDatabaseForAdmin()
 
+    def get_speciality_id_by_name(self, name):
+        res = self.low_db.select_spec_name_by_id(name)
+        return res[0]
+
     def save_homework(self, task_id, student_name, subject_name):
         try:
             student_id = self.get_student_id_by_name(student_name)
@@ -672,6 +676,18 @@ class BaseLowDatabase:
             return False
         return query_results
 
+    def select_spec_name_by_id(self, name):
+        try:
+            with self.conn.cursor() as cur:
+                sql = f"select id from speciality where name = '{name}'"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_fac_by_spec')
+            logging.error(err)
+            return False
+        return query_results
+
     def select_subject_id_by_name(self, subject_name):
         try:
             with self.conn.cursor() as cur:
@@ -694,6 +710,8 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                                      database="University",
                                      user="postgres",
                                      password="i183")
+
+
 
     def insert_teacher(self, full_name, name, password, is_delete=False):
         try:

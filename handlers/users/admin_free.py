@@ -31,7 +31,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/delete_fac - Удалить факультет',
         '/delete_subject - Удалить предмет',
         '/delete_speciality - Удалить специальность',
-        '/delete_timetable - Удалить расписание'
+        '/delete_timetable - Удалить расписание',
         '/see_bells - Просмотреть расписание звонков',
         '/see_admins - Просмотреть список админов',
         '/see_faculty - Просмотреть список факультетов',
@@ -83,6 +83,7 @@ async def add_homeworktask_to_student_third(message: types.Message, state: FSMCo
         if res:
             await message.answer('Задание было успешно сохранено, процесс назначения домашнего задания продолжается')
             my_global_dict['task_id_for_new_homework'] = task_id
+            await see_subject(message, state)
             await message.answer('Введите предмет, по которому будет задано это задание')
             await DeanState.WriteHomeWorkToStudentThird.set()
         else:
@@ -96,6 +97,7 @@ async def add_homeworktask_to_student_third(message: types.Message, state: FSMCo
 @dp.message_handler(state=DeanState.WriteHomeWorkToStudentThird)
 async def add_homework_to_student_second(message: types.Message, state: FSMContext):
     my_global_dict['subject_name_new_homework'] = message.text
+    await see_student(message, state)
     await message.answer('Введите имя студента, на которого вы хотите назначить дз')
     await DeanState.WriteHomeWorkToStudentFourth.set()
 
@@ -341,6 +343,7 @@ async def delete_subject_second(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('delete_admin'), state=DeanState.FreeState)
 async def delete_admin_first(message: types.Message, state: FSMContext):
     logging.warning('Началась функция удаления админа')
+    await see_admins(message, state)
     await message.answer('Введите имя админа, которого вы хотите удалить')
     await DeanState.DeleteAdminFirst.set()
 
@@ -679,6 +682,8 @@ async def get_homework_by_student_second(message: types.Message, state: FSMConte
     my_homework = Homework()
     res = my_homework.read_by_student(my_student)
     logging.warning(f'Получен ответ от модуля Homework. res = {res}')
+    if not res:
+        await message.answer('У заданного студента нет дз')
     for i in res:
         await message.answer(i)
     await DeanState.FreeState.set()
