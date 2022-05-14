@@ -648,6 +648,7 @@ async def select_custom_bell_second(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('see_faculty_by_speciality'), state=DeanState.FreeState)
 async def get_faculty_by_spec_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_faculty_by_speciality')
+    await see_speciality(message, state)
     await message.answer('Введите специальность, факультет которой вы хотите узнать')
     logging.warning('Пошел запрос пользователю на специальность, факультет которой вы хотите узнать')
     await DeanState.FacBySpec.set()

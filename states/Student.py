@@ -6,3 +6,7 @@ class StudentState(StatesGroup):
     WhichSpec = State()
     FinalReg = State()
     FreeState = State()
+    SelectTimetable = State()
+    SelectBell = State()
+    FacBySpec = State()
+    HomeworkByStudent = State()
