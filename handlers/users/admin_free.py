@@ -43,7 +43,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/see_teacher - Просмотреть список всех преподавателей',
         '/see_specific_bell - Просмотреть время начала и конца конкретной пары',
         '/see_faculty_by_speciality - Посмотреть, к какому факультету относится какая специальность',
-        '/see_homework_by_student - Посмотреть домашнее задание конкретного студента'
+        '/see_homework_by_student - Посмотреть домашнее задание конкретного студента',
         '/appoint_homework_to_student - Записать новое задание на студента',
         '/set_new_admin - Добавить нового админа',
         '/set_new_fac - Добавить новый факультет',
@@ -155,7 +155,11 @@ async def add_subject_second(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('set_timetable'), state=DeanState.FreeState)
 async def set_timetable_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции set_timetable')
+    await message.answer('Выводим дни недели')
+    for day in ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'):
+        await message.answer(day)
     await message.answer('Введите день недели (пока на английском с большой буквы)')
+
     await DeanState.SetTimetableFirst.set()
 
 
@@ -167,6 +171,7 @@ async def set_timetable_second(message: types.Message, state: FSMContext):
         await message.answer('Введен неверный день недели, переход в свободный режим')
         await DeanState.FreeState.set()
     logging.warning(f'День недели = {day}')
+    await see_bells(message, state)
     await message.answer('Введите номер пары, на которой будет нужный вам предмет')
     await DeanState.SetTimetableSecond.set()
 
@@ -177,6 +182,7 @@ async def set_timetable_third(message: types.Message, state: FSMContext):
         bell_id = int(message.text)
         my_global_dict['timetable_bell'] = bell_id
         logging.warning(f'Номер пары = {bell_id}')
+        await see_subject(message, state)
         await message.answer('Введите название предмета')
         await DeanState.SetTimetableThird.set()
     except Exception as err:
@@ -189,6 +195,7 @@ async def set_timetable_fourth(message: types.Message, state: FSMContext):
     subject_name = message.text
     my_global_dict['timetable_subject'] = subject_name
     logging.warning(f'Предмет = {subject_name}')
+    await see_speciality(message, state)
     await message.answer('Введите специализацию')
     await DeanState.SetTimetableFourth.set()
 
@@ -223,6 +230,7 @@ async def set_timetable_sixth(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('see_timetable'), state=DeanState.FreeState)
 async def see_timetable_first(message: types.Message, state: FSMContext):
     logging.warning('Началась функция показа расписания')
+    await see_speciality(message, state)
     await message.answer('Введите специальность, расписание которой вы хотите посмотреть')
     await DeanState.SelectTimetable.set()
 
@@ -492,6 +500,7 @@ async def true_change_bells_second(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('delete_teacher'), state=DeanState.FreeState)
 async def delete_teacher_first_step(message: types.Message, state: FSMContext):
     logging.warning('Начало функции delete_teacher')
+    await see_teacher(message, state)
     await message.answer('Какого преподавателя вы хотите удалить?')
     logging.warning('Запрос на имя преподавателя отправлен')
     await DeanState.DeleteTeacher.set()
@@ -525,7 +534,7 @@ async def see_bells(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(Command('see_admins'), state=DeanState.FreeState)
-async def see_bells(message: types.Message, state: FSMContext):
+async def see_admins(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_admins')
     await message.answer('Выводим список админов...')
     my_admin = Admin()
@@ -657,6 +666,7 @@ async def get_faculty_by_spec_first(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('see_homework_by_student'), state=DeanState.FreeState)
 async def get_homework_by_student_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_homework_by_student')
+    await see_student(message, state)
     await message.answer('Напишите имя студента, дз которого вы хотите получить')
     logging.warning('Пошел запрос пользователю на имя студента, дз которого вы хотите получить')
     await DeanState.HomeworkByStudent.set()
