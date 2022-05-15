@@ -94,7 +94,7 @@ class Student(DefaultEssence):
 
     def delete(self, name):
         student_id = db_admin.get_student_id_by_name(name)
-        flag = db_admin.delete_admin(student_id)
+        flag = db_admin.delete_student(student_id)
         return flag
 
 

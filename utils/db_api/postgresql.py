@@ -721,13 +721,19 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                                      user="postgres",
                                      password="i183")
 
-
-
     def insert_teacher(self, full_name, name, password, is_delete=False):
         try:
             with self.conn.cursor() as cur:
                 sql = 'insert into teacher(full_name, name, password, is_delete) ' \
                       f"values('{full_name}', '{name}','{password}', '{is_delete}') "
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except UniqueViolation:
+            self.conn.rollback()
+            with self.conn.cursor() as cur:
+                sql = "update teacher set is_delete=FALSE " \
+                      f"where full_name = '{full_name}'"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -851,7 +857,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
     def delete_student(self, id):
         try:
             with self.conn.cursor() as cur:
-                sql = f"Update student set is_delete = TRUE where id = {id}"
+                sql = f"delete from student where id = {id}"
                 cur.execute(sql)
                 self.conn.commit()
                 return True

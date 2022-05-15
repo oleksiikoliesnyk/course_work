@@ -35,9 +35,23 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/see_specific_bell - Просмотреть время начала и конца конкретной пары',
         '/see_faculty_by_speciality - Посмотреть, к какому факультету относится какая специальность',
         '/see_homework_by_student - Посмотреть домашнее задание конкретного студента',
+        '/logout'
 
     ]
     await message.answer('\n'.join(text))
+
+
+@dp.message_handler(Command('logout'), state=StudentState.FreeState)
+async def logout_student(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции logout_admin')
+    my_student = Student()
+    result = my_student.delete(name=message.from_user.full_name)
+    if result:
+        await message.answer('Вы успешно логаутнулись')
+        await message.answer('Чтобы снова зарегестрироваться, пропишите команду /start')
+        await state.reset_state()
+    else:
+        await message.answer('Произошла ошибка при логауте')
 
 
 @dp.message_handler(Command('see_bells'), state=StudentState.FreeState)

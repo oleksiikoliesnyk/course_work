@@ -43,7 +43,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(Command('logout'), state=TeacherState.FreeState)
-async def logout_admin(message: types.Message, state: FSMContext):
+async def logout_tacher(message: types.Message, state: FSMContext):
     logging.warning('Начало функции logout_admin')
     my_teacher = Teacher()
     result = my_teacher.delete(name=message.from_user.full_name)

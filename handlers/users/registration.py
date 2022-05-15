@@ -17,20 +17,12 @@ from states.Teacher import TeacherState
 from utils.db_api.test_postgtes import query_results
 
 
-
 @dp.callback_query_handler(type_callback.filter(type='Student'))
 async def register_student(call: CallbackQuery, callback_data: dict):
     await call.answer(cache_time=60)
     # my_facultys = db.get_facultyes()
     await call.message.answer('Ваш профиль будет сохранен как профиль студент! (напишите что угодно)')
-    await StudentState.WhichCourse.set()
-    # res_string = f'Вот список факультетов: {my_facultys}\n Напишите, с какого вы?'
-    # await call.message.answer(res_string, reply_markup=fac_choice)
-
-
-@dp.message_handler(state=StudentState.WhichCourse)
-async def register_student_2(message: types.Message):
-    await message.answer('Какой курс?')
+    await call.message.answer('На каком курсе вы учитесь?')
     await StudentState.WhichSpec.set()
 
 
@@ -46,15 +38,20 @@ async def register_student_3(message: types.Message):
 async def register_student_3(message: types.Message):
     name_spec = message.text
     id_spec = db_admin.get_speciality_id_by_name(name_spec)
-    #id_spec = db.get_speciality_id_by_name(name_spec)
+    # id_spec = db.get_speciality_id_by_name(name_spec)
     my_student = Student()
     data_to_write = {'password': message.from_user.id,
                      'full_name': message.from_user.full_name,
                      'name': message.from_user.username,
                      'course': my_global_dict['register_student_course'],
                      'id_spec': id_spec[0]}
-    my_student.write(data_to_write)
-    #db.save_student(password=message.from_user.id,
+    res = my_student.write(data_to_write)
+    if res:
+        await message.answer('Ваш профиль успешно сохранен как студент!')
+        await message.answer('Чтобы узнать, какие команды вам доступны, вбейте команду "/help"')
+    else:
+        await message.answer('Ошибка при регистрации')
+    # db.save_student(password=message.from_user.id,
     #                full_name=message.from_user.full_name,
     #                name=message.from_user.username,
     #                id_spec=id_spec,
@@ -66,10 +63,16 @@ async def register_student_3(message: types.Message):
 async def register_teacher(call: CallbackQuery, callback_data: dict):
     await call.answer(cache_time=60)
     await call.message.answer('Вы будете сохранены как преподаватель')
-    db.save_teacher(password=call.from_user.id,
-                    full_name=call.from_user.full_name,
-                    name=call.from_user.username)
+    res = db.save_teacher(password=call.from_user.id,
+                          full_name=call.from_user.full_name,
+                          name=call.from_user.username)
+    if res:
+        await call.message.answer('Вы успешно зарегестрированы как преподаватель!')
+        await call.message.answer('Чтобы узнать, какие команды вам доступны, вбейте команду "/help"')
+    else:
+        await call.message.answer('Ошибка при регистрации!')
     await TeacherState.FreeState.set()
+
 
 @dp.callback_query_handler(type_callback.filter(type='Dean'))
 async def register_dean(call: CallbackQuery, callback_data: dict):
@@ -77,8 +80,7 @@ async def register_dean(call: CallbackQuery, callback_data: dict):
     await call.message.answer('Ваш профиль будет сохранен как профиль админа!')
     print(callback_data)
     db.save_admin(password=call.from_user.id,
-                 full_name=call.from_user.full_name,
-                 name=call.from_user.username)
+                  full_name=call.from_user.full_name,
+                  name=call.from_user.username)
     await call.message.answer('Чтобы узнать, какие команды вам доступны, вбейте команду "/help"')
     await DeanState.FreeState.set()
-
