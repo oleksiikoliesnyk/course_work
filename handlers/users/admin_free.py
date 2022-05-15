@@ -476,6 +476,7 @@ async def delete_student_second(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('set_bells'), state=DeanState.FreeState)
 async def change_bells(message: types.Message, state: FSMContext):
     logging.warning('Начало функции set_bells')
+    await see_bells(message, state)
     await message.answer('Начинаем изменять расписание звонков!')
     await message.answer('К какой паре будем менять звонок?')
     logging.warning('Отправлен запрос на номер пары')

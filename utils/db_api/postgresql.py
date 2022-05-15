@@ -503,7 +503,7 @@ class BaseLowDatabase:
             sql = 'Select s.name, t.full_name ' \
                   'from subject s ' \
                   'inner join teacher t on t.id = s.teacher_id ' \
-                  'where s.is_delete<>TRUE'
+                  'where s.is_delete<>TRUE and t.is_delete <> TRUE'
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
