@@ -11,7 +11,7 @@ class DefaultEssence(ABC):
         pass
 
     @abstractmethod
-    def write(self, data):
+    def write(self, data: dict):
         """
         В любую сущность можно записать новую строчку
         """
@@ -23,6 +23,19 @@ class DefaultEssence(ABC):
         В любой сущности можно удалить нужную строчку
         """
         pass
+
+
+
+
+class Dean(DefaultEssence):
+    def write(self, data):
+        pass
+
+    def read(self):
+        pass
+
+    def delete(self, full_name):
+        return db_admin.delete_admin(name=full_name)
 
 
 class Faculty(DefaultEssence):

@@ -4,16 +4,18 @@ from datetime import datetime
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart, Command, CommandHelp
+from aiogram.dispatcher.filters.state import StatesGroup
 from aiogram.types import CallbackQuery
 
 from data.db_constant import facultys
 from data.global_conf import my_global_dict
-from data.controller import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable, Homework, Task
+from data.controller import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable, Homework, Task, Dean
 from keyboards.inline.faculty_button.faculty_button import fac_choice
 from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
 from loader import dp, db_admin as db
 from states.Dean import DeanState
+from states.User import UserState
 from utils.db_api.test_postgtes import query_results
 
 
@@ -51,10 +53,24 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/set_student - Добавить нового студента',
         '/set_teacher - Добавить нового преподавателя',
         '/set_timetable - Добавить предмет в расписание',
-        '/set_admin - Добавить нового админа'
+        '/set_admin - Добавить нового админа',
+        '/logout'
 
     ]
     await message.answer('\n'.join(text))
+
+
+@dp.message_handler(Command('logout'), state=DeanState.FreeState)
+async def logout_admin(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции logout_admin')
+    my_dean = Dean()
+    result = my_dean.delete(full_name=message.from_user.full_name)
+    if result:
+        await message.answer('Вы успешно логаутнулись')
+        await message.answer('Чтобы снова зарегестрироваться, пропишите команду /start')
+        await state.reset_state()
+    else:
+        await message.answer('Произошла ошибка при логауте')
 
 
 @dp.message_handler(Command('appoint_homework_to_student'), state=DeanState.FreeState)
