@@ -9,6 +9,7 @@ from keyboards.inline.type_button.type_callback import type_callback
 from loader import dp, db_admin as db
 from states.Dean import DeanState
 from states.Student import StudentState
+from states.Teacher import TeacherState
 
 
 @dp.message_handler(CommandStart())
@@ -22,7 +23,8 @@ async def bot_start(message: types.Message):
                 await message.answer('Вы вошли как админ')
                 await DeanState.FreeState.set()
             elif specialization == 'teacher':
-                await message.answer('Тут выполнится машина состояний для преподавателя')
+                await message.answer('Вы вошли как преподаватель')
+                await TeacherState.FreeState.set()
             else:
                 await message.answer('Вы вошли как студент')
                 await StudentState.FreeState.set()

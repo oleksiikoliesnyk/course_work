@@ -13,6 +13,7 @@ from keyboards.inline.type_button.type_callback import type_callback
 from loader import dp, db_admin as db, db_admin
 from states.Dean import DeanState
 from states.Student import StudentState
+from states.Teacher import TeacherState
 from utils.db_api.test_postgtes import query_results
 
 
@@ -68,6 +69,7 @@ async def register_teacher(call: CallbackQuery, callback_data: dict):
     db.save_teacher(password=call.from_user.id,
                     full_name=call.from_user.full_name,
                     name=call.from_user.username)
+    await TeacherState.FreeState.set()
 
 @dp.callback_query_handler(type_callback.filter(type='Dean'))
 async def register_dean(call: CallbackQuery, callback_data: dict):
