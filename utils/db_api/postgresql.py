@@ -1,5 +1,6 @@
 import logging
 from pprint import pprint
+from psycopg2.errors import UniqueViolation
 
 import psycopg2
 
@@ -526,6 +527,7 @@ class BaseLowDatabase:
         except Exception as err:
             logging.error('Error in select_teacher_by_cred')
             logging.error(err)
+            self.conn.rollback()
             return False
         return query_results
 
@@ -540,6 +542,7 @@ class BaseLowDatabase:
         except Exception as err:
             logging.error('Error in select_student_by_cred')
             logging.error(err)
+            self.conn.rollback()
             return False
         return query_results
 
@@ -554,6 +557,7 @@ class BaseLowDatabase:
         except Exception as err:
             logging.error('Error in select_admin_by_cred')
             logging.error(err)
+            self.conn.rollback()
             return False
         return query_results
 
@@ -629,6 +633,7 @@ class BaseLowDatabase:
         except Exception as err:
             logging.error('Error in select_teacher_by_cred')
             logging.error(err)
+            self.conn.rollback()
             return False
         return query_results
 
@@ -643,6 +648,7 @@ class BaseLowDatabase:
         except Exception as err:
             logging.error('Error in select_fac_by_spec')
             logging.error(err)
+            self.conn.rollback()
             return False
         return query_results
 
@@ -659,6 +665,7 @@ class BaseLowDatabase:
         except Exception as err:
             logging.error('Error in select_homework_by_student')
             logging.error(err)
+            self.conn.rollback()
             return False
         return query_results
 
@@ -673,6 +680,7 @@ class BaseLowDatabase:
         except Exception as err:
             logging.error('Error in select_task_id_by_name')
             logging.error(err)
+            self.conn.rollback()
             return False
         return query_results
 
@@ -685,6 +693,7 @@ class BaseLowDatabase:
         except Exception as err:
             logging.error('Error in select_fac_by_spec')
             logging.error(err)
+            self.conn.rollback()
             return False
         return query_results
 
@@ -699,6 +708,7 @@ class BaseLowDatabase:
         except Exception as err:
             logging.error('Error in select_subject_id_by_name')
             logging.error(err)
+            self.conn.rollback()
             return False
         return query_results
 
@@ -723,6 +733,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                 return True
         except Exception as err:
             logging.error('Error into insert_teacher!')
+            self.conn.rollback()
             logging.error(err)
             return False
 
@@ -737,6 +748,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into insert_student!')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def insert_admin(self, password, name, full_name, is_delete=False):
@@ -747,9 +759,18 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                 cur.execute(sql)
                 self.conn.commit()
                 return True
+        except UniqueViolation:
+            self.conn.rollback()
+            with self.conn.cursor() as cur:
+                sql = "update admin set is_delete=FALSE " \
+                      f"where full_name = '{full_name}'"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
         except Exception as err:
             logging.error('Error into insert_admin!')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def insert_subject(self, subject, teacher, is_delete=False):
@@ -763,6 +784,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into insert_subject!')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def update_bell(self, id, first_time, second_time):
@@ -781,6 +803,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into update_bell!')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def insert_bell(self, first_time, second_time):
@@ -794,6 +817,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into insert_bell!')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def insert_faculty(self, name, is_delete=False):
@@ -834,6 +858,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into delete_student!')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def delete_teacher_by_name(self, name):
@@ -849,6 +874,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into delete teacher_by_name')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def delete_fac_by_name(self, name):
@@ -864,6 +890,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into delete teacher_by_name')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def delete_admin(self, name):
@@ -878,6 +905,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into delete teacher_by_name')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def delete_subject(self, name):
@@ -892,6 +920,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into delete teacher_subject')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def delete_speciality(self, id):
@@ -906,6 +935,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into delete delete_speciality')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def insert_timetable(self, bell, subject, specialization, day_of_week, course):
@@ -948,6 +978,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into delete delete_timetable')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def delete_course_spec(self, spec_id):
@@ -962,6 +993,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into delete delete_timetable')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def update_timetable(self, timetable_id, bell, subject_id, specialization_id, day_of_week, course):
@@ -981,6 +1013,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         except Exception as err:
             logging.error('Error into delete_student!')
             logging.error(err)
+            self.conn.rollback()
             return False
 
     def insert_homewrok(self, student_id, subject_id, task_id):
