@@ -811,6 +811,7 @@ async def set_new_student_third(message: types.Message, state: FSMContext):
 @dp.message_handler(state=DeanState.SetStudentThird)
 async def set_new_student_third(message: types.Message, state: FSMContext):
     my_global_dict['course_new_student'] = message.text
+    await see_speciality(message, state)
     await message.answer('Введите специальность студента')
     await DeanState.SetStudentFourth.set()
 
