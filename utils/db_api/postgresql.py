@@ -220,6 +220,12 @@ class DatabaseForAdmin(BaseDatabase):
     def __init__(self):
         self.low_db = LowDatabaseForAdmin()
 
+    def add_teacher_to_speciality(self, speciality_name, teacher_name):
+        speciality_id = self.low_db.select_specializationid_by_name(speciality_name)[0][0]
+        teacher_id = self.get_id_teacher_by_name(teacher_name)
+        res = self.low_db.insert_teacher_for_specialization(speciality_id, teacher_id)
+        return res
+
     def get_speciality_id_by_name(self, name):
         res = self.low_db.select_spec_name_by_id(name)
         return res[0]
@@ -721,6 +727,21 @@ class LowDatabaseForAdmin(BaseLowDatabase):
                                      user="postgres",
                                      password="i183")
 
+    def insert_teacher_for_specialization(self, speciality_id, teacher_id):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "insert into specialitytoteacher (id_speciality, id_teacher)" \
+                      f"values ({speciality_id}, {teacher_id})"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_teacher_for_specialization')
+            logging.error(err)
+            self.conn.rollback()
+            return False
+
+
     def insert_teacher(self, full_name, name, password, is_delete=False):
         try:
             with self.conn.cursor() as cur:
@@ -1049,8 +1070,6 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error(err)
             self.conn.rollback()
             return False
-
-
 
 
 class LowDatabaseForTeacher(BaseLowDatabase):

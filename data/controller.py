@@ -73,6 +73,12 @@ class Speciality(DefaultEssence):
         flag = db_admin.delete_speciality(id)
         return flag
 
+    def add_teacher(self, data):
+        speciality_name = data['speciality_name']
+        teacher_name = data['teacher_name']
+        return db_admin.add_teacher_to_speciality(speciality_name=speciality_name,
+                                                  teacher_name=teacher_name)
+
 
 class Student(DefaultEssence):
     def read(self):

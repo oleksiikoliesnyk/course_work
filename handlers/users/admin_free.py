@@ -60,6 +60,37 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
     await message.answer('\n'.join(text))
 
 
+@dp.message_handler(Command('add_speciality_for_teacher'), state=DeanState.FreeState)
+async def add_speciality_for_teacher(message: types.Message, state: FSMContext):
+    await see_teacher(message, state)
+    await message.answer('Введите преподавателя, которого вы хотите добавить на специальность')
+    await DeanState.SetTeacherForAdding.set()
+
+
+@dp.message_handler(state=DeanState.SetTeacherForAdding)
+async def add_speciality_for_teacher_second(message: types.Message, state: FSMContext):
+    my_global_dict['name_teacher_for_speciality'] = message.text
+    await see_speciality(message, state)
+    await message.answer('Введите название специальности, на которую вы хотите добавить преподавателя')
+    await DeanState.SetSpecialityForAdding.set()
+
+
+@dp.message_handler(state=DeanState.SetSpecialityForAdding)
+async def add_speciality_for_teacher_third(message: types.Message, state: FSMContext):
+    specilality_name = message.text
+    data_to_save = {'speciality_name': specilality_name,
+                    'teacher_name': my_global_dict['name_teacher_for_speciality']}
+    my_speciality = Speciality()
+    res = my_speciality.add_teacher(data_to_save)
+    if res:
+        answer_string = f"Преподаватель {my_global_dict['name_teacher_for_speciality']} был успешно " \
+                        f"добавлен на специальность {specilality_name}"
+        await message.answer(answer_string)
+        await DeanState.FreeState.set()
+    else:
+        await message.answer('Возникла ошибка!')
+
+
 @dp.message_handler(Command('logout'), state=DeanState.FreeState)
 async def logout_admin(message: types.Message, state: FSMContext):
     logging.warning('Начало функции logout_admin')
@@ -270,6 +301,7 @@ async def see_timetable_second(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('delete_timetable'), state=DeanState.FreeState)
 async def delete_timetable_first(message: types.Message, state: FSMContext):
     logging.warning('Началась функция удаления расписания')
+    await see_speciality(message, state)
     await message.answer('Введите специальность, для которой вы хотите удалить расписание')
     await DeanState.DeleteTimeTableFirst.set()
 
@@ -338,6 +370,7 @@ async def delete_subject_second(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('delete_speciality'), state=DeanState.FreeState)
 async def delete_speciality_first(message: types.Message, state: FSMContext):
     logging.warning('Началась функция удаления специальности')
+    await see_speciality(message, state)
     await message.answer('Введите имя специальности, которую вы хотите удалить')
     await DeanState.DeleteSpeciality.set()
 

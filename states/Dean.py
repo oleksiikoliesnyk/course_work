@@ -50,6 +50,8 @@ class DeanState(StatesGroup):
     WriteHomeWorkToStudentSecond = State()
     WriteHomeWorkToStudentThird = State()
     WriteHomeWorkToStudentFourth = State()
+    SetTeacherForAdding = State()
+    SetSpecialityForAdding = State()
 
 
 
