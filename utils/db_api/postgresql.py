@@ -113,8 +113,9 @@ class BaseDatabase:
         for homework in raw_res:
             result_string = f'Название предмета = {homework[1]},\n' \
                             f'Имя студента = {homework[2]}\n' \
-                            f'Название задания = {homework[3]}\n' \
-                            f'Подробности задания = {homework[4]}\n' \
+                            f'Название задания = {homework[4]}\n' \
+                            f'Подробности задания = {homework[5]}\n' \
+                            f'Преподаватель, что назначил = {homework[3]}\n' \
                             f'Статус задачи = {homework[0]}'
             result_list.append(result_string)
         return result_list
@@ -485,12 +486,13 @@ class BaseLowDatabase:
 
     def select_homework(self):
         with self.conn.cursor() as cur:
-            sql = 'select h.status as "Статус задания", s.name as "Название предмета", std.name as "Имя студента", ' \
+            sql = 'select h.status as "Статус задания", s.name as "Название предмета", std.name as "Имя студента", tch.full_name, ' \
                   't.task as "Название задачи", t.addition as "Условие задачи" ' \
                   'from homework h ' \
                   'inner join subject s on s.id = h.id_subject ' \
                   'inner join student std on std.id = h.id_student ' \
-                  'inner join task t on t.id = h.task_id;'
+                  'inner join task t on t.id = h.task_id ' \
+                  'inner join teacher tch on tch.id = h.teacher_id;'
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
