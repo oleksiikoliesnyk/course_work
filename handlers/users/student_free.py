@@ -8,7 +8,8 @@ from aiogram.types import CallbackQuery
 
 from data.db_constant import facultys
 from data.global_conf import my_global_dict
-from data.controller import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable, Homework, Task
+from data.controller import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable, Homework, Task, \
+    SolvingHomework
 from keyboards.inline.faculty_button.faculty_button import fac_choice
 from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
@@ -36,10 +37,50 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/see_faculty_by_speciality - Посмотреть, к какому факультету относится какая специальность',
         '/see_your_homework - Посмотреть домашнее задание конкретного студента',
         '/start_solving_of_homework - Начать решение домашнего задания',
+        '/solve_your_homework - Решить домашнее задание',
         '/logout'
 
     ]
     await message.answer('\n'.join(text))
+
+
+@dp.message_handler(Command('solve_your_homework'), state=StudentState.FreeState)
+async def start_solving_of_homework(message: types.Message, state: FSMContext):
+    my_student = message.from_user.full_name
+    my_homework = Homework()
+    res = my_homework.read_by_student(my_student, include_status=True)
+    logging.warning(f'Получен ответ от модуля Homework. res = {res}')
+    if not res:
+        await message.answer('У вас нет активных домашних заданий')
+    await message.answer('Вот ваши активные домашние задания')
+    for i in res:
+        await message.answer(i)
+    await message.answer('Решение какого из них вы хотите отправить?')
+    await StudentState.SecondSolving.set()
+
+
+@dp.message_handler(state=StudentState.SecondSolving)
+async def second_solving_of_homework2(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции logout_admin')
+    my_global_dict['name_of_homework_to_solve'] = message.text
+    await message.answer('Напишите решение')
+    await StudentState.ThirdSolving.set()
+
+
+@dp.message_handler(state=StudentState.ThirdSolving)
+async def second_solving_of_homework2(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции logout_admin')
+    solving = message.text
+    data_to_save = {'name_of_student': message.from_user.full_name,
+                    'name_of_homework_to_solve': my_global_dict['name_of_homework_to_solve'],
+                    'solving': solving}
+    my_solving = SolvingHomework()
+    res = my_solving.write(data_to_save)
+    if res:
+        await message.answer('Вы успешно отправили решение')
+    else:
+        await message.answer('Произошла ошибка')
+    await StudentState.FreeState.set()
 
 
 @dp.message_handler(Command('start_solving_of_homework'), state=StudentState.FreeState)

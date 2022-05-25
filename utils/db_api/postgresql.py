@@ -15,8 +15,8 @@ class BaseDatabase:
         res = self.low_db.select_subject_id_by_name(subject_name)[0][0]
         return res
 
-    def get_homework_by_student(self, my_student):
-        res = self.low_db.select_homework_by_student(my_student)
+    def get_homework_by_student(self, my_student, include_status):
+        res = self.low_db.select_homework_by_student(my_student, include_status)
         res_list = list()
         for i in res:
             res_string = f'Текст домашнего задания = {i[0]},\n' \
@@ -428,6 +428,13 @@ class DatabaseForStudent(BaseDatabase):
                                                  id_of_student=id_student)
         return res
 
+    def save_solving(self, name_of_student, name_of_homework_to_solve, solving):
+        id_student = self.get_student_id_by_name(name_of_student)
+        id_homework = self.get_homework_id_by_task(name_of_homework_to_solve, id_student)
+        res = self.low_db.insert_solving(id_student=id_student,
+                                         id_homework=id_homework,
+                                         solving=solving)
+        return res
 
 class BaseLowDatabase:
     def __init__(self):
@@ -682,15 +689,24 @@ class BaseLowDatabase:
             return False
         return query_results
 
-    def select_homework_by_student(self, my_student):
+    def select_homework_by_student(self, my_student, include_status):
         try:
             with self.conn.cursor() as cur:
-                sql = 'select t.task, t.addition, h.status, tch.full_name ' \
-                      'from homework h ' \
-                      'inner join task t on h.task_id=t.id ' \
-                      'inner join student s on h.id_student=s.id ' \
-                      'inner join teacher tch on tch.id = h.teacher_id ' \
-                      f"where s.name = '{my_student}' or s.full_name = '{my_student}' "
+                if include_status:
+                    sql = 'select t.task, t.addition, h.status, tch.full_name ' \
+                          'from homework h ' \
+                          'inner join task t on h.task_id=t.id ' \
+                          'inner join student s on h.id_student=s.id ' \
+                          'inner join teacher tch on tch.id = h.teacher_id ' \
+                          f"where s.name = '{my_student}' or s.full_name = '{my_student}' " \
+                          f"and h.status = 'in progress'"
+                else:
+                    sql = 'select t.task, t.addition, h.status, tch.full_name ' \
+                        'from homework h ' \
+                        'inner join task t on h.task_id=t.id ' \
+                        'inner join student s on h.id_student=s.id ' \
+                        'inner join teacher tch on tch.id = h.teacher_id ' \
+                        f"where s.name = '{my_student}' or s.full_name = '{my_student}' "
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
@@ -1144,6 +1160,20 @@ class LowDatabaseForStudent(BaseLowDatabase):
             logging.error(err)
             self.conn.rollback()
         return query_results
+
+    def insert_solving(self, id_student, id_homework, solving):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "insert into solvinghomework(id_homework, solving, id_student, is_delete) " \
+                      f"values ({id_homework}, '{solving}', {id_student}, FALSE )"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_task!')
+            logging.error(err)
+            self.conn.rollback()
+            return False
 
 
 class Database:

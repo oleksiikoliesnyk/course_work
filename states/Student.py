@@ -11,3 +11,5 @@ class StudentState(StatesGroup):
     FacBySpec = State()
     HomeworkByStudent = State()
     FirstSolving = State()
+    SecondSolving = State()
+    ThirdSolving = State()

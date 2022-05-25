@@ -210,8 +210,8 @@ class Homework(DefaultEssence):
                                                    name_of_student=name_of_student)
         return result
 
-    def read_by_student(self, student):
-        result = db_admin.get_homework_by_student(student)
+    def read_by_student(self, student, include_status=False):
+        result = db_admin.get_homework_by_student(student, include_status)
         return result
 
 
@@ -247,8 +247,14 @@ class SolvingHomework(DefaultEssence):
     def read(self):
         pass
 
-    def write(self):
-        pass
+    def write(self, data):
+        name_of_student = data['name_of_student']
+        name_of_homework_to_solve = data['name_of_homework_to_solve']
+        solving = data['solving']
+        res = db_student.save_solving(name_of_student=name_of_student,
+                                      name_of_homework_to_solve=name_of_homework_to_solve,
+                                      solving=solving)
+        return res
 
     def delete(self):
         pass
