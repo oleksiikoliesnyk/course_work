@@ -201,6 +201,15 @@ class Homework(DefaultEssence):
     def delete(self):
         pass
 
+    def update_status(self, data):
+        status = data['status']
+        name_of_homework = data['name_of_homework']
+        name_of_student = data['name_of_student']
+        result = db_student.update_status_homework(status=status,
+                                                   name_of_homework=name_of_homework,
+                                                   name_of_student=name_of_student)
+        return result
+
     def read_by_student(self, student):
         result = db_admin.get_homework_by_student(student)
         return result

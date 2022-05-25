@@ -59,7 +59,7 @@ class BaseDatabase:
         res = list()
         admins = self.low_db.select_admins()
         for admin in admins:
-            if admin[1] !='None':
+            if admin[1] != 'None':
                 res_string = f'Полное имя админа: {admin[1]} \n' \
                              f'Ник админа: {admin[2]}'
             else:
@@ -304,7 +304,7 @@ class DatabaseForAdmin(BaseDatabase):
         pprint(f'MY_DICT BELL = {my_dict["bell"]}')
         print(f"BELL in my_dict['bell'] = {bell in my_dict['bell']}")
         print('*******************************************************************************************')
-        print(f'subject  = {subject }')
+        print(f'subject  = {subject}')
         pprint(f'my_dict["subject"] = {my_dict["subject"]}')
         print(f"subject in my_dict['subject'] = {subject in my_dict['subject']}")
         print('*******************************************************************************************')
@@ -317,8 +317,10 @@ class DatabaseForAdmin(BaseDatabase):
         print(f'type(my_dict["course"][0] = {type(my_dict["course"][0])}')
         pprint(f'my_dict["course"] = {my_dict["course"]}')
         print(f"course in my_dict['course'] = {course in my_dict['course']}")
-        if specialization in my_dict['speciality'] and bell in my_dict['bell'] and subject in my_dict['subject'] and day_of_week in my_dict['day'] and int(course) in my_dict['course']:
-            if my_dict['speciality'].index(specialization)==my_dict['bell'].index(bell)==my_dict['subject'].index(subject)==my_dict['day'].index(day_of_week)==my_dict['course'].index(course):
+        if specialization in my_dict['speciality'] and bell in my_dict['bell'] and subject in my_dict[
+            'subject'] and day_of_week in my_dict['day'] and int(course) in my_dict['course']:
+            if my_dict['speciality'].index(specialization) == my_dict['bell'].index(bell) == my_dict['subject'].index(
+                    subject) == my_dict['day'].index(day_of_week) == my_dict['course'].index(course):
                 return True
         else:
             return False
@@ -326,11 +328,11 @@ class DatabaseForAdmin(BaseDatabase):
     def save_timetable(self, bell, subject, specialization, day_of_week, course):
         subject_id = self.low_db.select_subjectid_by_name(subject)[0][0]
         specialization_id = self.low_db.select_specializationid_by_name(specialization)[0][0]
-        #is_update = self._check_for_update_timetable(bell, subject, specialization, day_of_week, course)
-        #todo: сделать проверку,  что может он не добавляет, а изменяет расписание!
-        #if is_update:
+        # is_update = self._check_for_update_timetable(bell, subject, specialization, day_of_week, course)
+        # todo: сделать проверку,  что может он не добавляет, а изменяет расписание!
+        # if is_update:
         res = self.low_db.insert_timetable(bell, subject_id, specialization_id, day_of_week, course)
-        #else:
+        # else:
         #    timetable_id = self.get_id_timetable_by_cred(speciality=specialization_id,
         #                                                 bell_id=bell,
         #                                                 day=day_of_week)
@@ -367,7 +369,7 @@ class DatabaseForAdmin(BaseDatabase):
         if res:
             id = self.low_db.select_specializationid_by_name(name)[0][0]
             for i in range(COUNT_OF_COURSES):
-                res &= self.low_db.insert_course_spec(id, course=i+1)
+                res &= self.low_db.insert_course_spec(id, course=i + 1)
         return res
 
     def delete_student(self, id):
@@ -399,8 +401,8 @@ class DatabaseForAdmin(BaseDatabase):
     def delete_timetable(self, speciality, day, bell_id):
         spec_id = self.low_db.select_id_spec_by_name(speciality)[-1][0]
         timetable_id = self.get_id_timetable_by_cred(speciality=spec_id,
-                                                    day=day,
-                                                    bell_id=bell_id)
+                                                     day=day,
+                                                     bell_id=bell_id)
         res = self.low_db.delete_timetable(timetable_id)
         return res
 
@@ -413,6 +415,18 @@ class DatabaseForTeacher(BaseDatabase):
 class DatabaseForStudent(BaseDatabase):
     def __init__(self):
         self.low_db = LowDatabaseForStudent()
+
+    def get_homework_id_by_task(self, name_of_homework, id_student):
+        res = self.low_db.select_homework_id_by_name(name_of_homework, id_student)[0][0]
+        return res
+
+    def update_status_homework(self, status, name_of_homework, name_of_student):
+        id_student = self.get_student_id_by_name(name_of_student)
+        id_homework = self.get_homework_id_by_task(name_of_homework, id_student)
+        res = self.low_db.update_status_homework(status=status,
+                                                 id_of_homework=id_homework,
+                                                 id_of_student=id_student)
+        return res
 
 
 class BaseLowDatabase:
@@ -691,7 +705,7 @@ class BaseLowDatabase:
             with self.conn.cursor() as cur:
                 sql = 'select t.id ' \
                       'from task t ' \
-                    f"where t.task = '{task}'and t.is_delete<>TRUE "
+                      f"where t.task = '{task}'and t.is_delete<>TRUE "
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
@@ -719,7 +733,7 @@ class BaseLowDatabase:
             with self.conn.cursor() as cur:
                 sql = 'select s.id ' \
                       'from subject s ' \
-                    f"where s.name = '{subject_name}' and s.is_delete<>TRUE "
+                      f"where s.name = '{subject_name}' and s.is_delete<>TRUE "
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
@@ -751,7 +765,6 @@ class LowDatabaseForAdmin(BaseLowDatabase):
             logging.error(err)
             self.conn.rollback()
             return False
-
 
     def insert_teacher(self, full_name, name, password, is_delete=False):
         try:
@@ -1058,7 +1071,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         try:
             with self.conn.cursor() as cur:
                 sql = "Insert into homework(id_student,id_subject,status,task_id, is_delete) " \
-                        f"values({student_id}, {subject_id}, 'assigned', {task_id}, FALSE)"
+                      f"values({student_id}, {subject_id}, 'assigned', {task_id}, FALSE)"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -1072,7 +1085,7 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         try:
             with self.conn.cursor() as cur:
                 sql = "Insert into task(task,addition, is_delete) " \
-                        f"values('{task}', '{addition}', FALSE)"
+                      f"values('{task}', '{addition}', FALSE)"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -1099,6 +1112,38 @@ class LowDatabaseForStudent(BaseLowDatabase):
                                      database="University",
                                      user="student",
                                      password="student_password")
+
+    def update_status_homework(self, status, id_of_homework, id_of_student):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "update homework " \
+                      f"set status= '{status}' " \
+                      f"where id_student = {id_of_student} and " \
+                      f"id = {id_of_homework}"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_task!')
+            logging.error(err)
+            self.conn.rollback()
+            return False
+
+    def select_homework_id_by_name(self, name_of_homework, id_student):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'select h.id ' \
+                      'from homework h ' \
+                      'inner join task t on t.id = h.task_id ' \
+                      f"where t.task = '{name_of_homework}' " \
+                      f"and id_student = {id_student}"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_subject_id_by_name')
+            logging.error(err)
+            self.conn.rollback()
+        return query_results
 
 
 class Database:

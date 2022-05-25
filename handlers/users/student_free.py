@@ -35,10 +35,40 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/see_specific_bell - Просмотреть время начала и конца конкретной пары',
         '/see_faculty_by_speciality - Посмотреть, к какому факультету относится какая специальность',
         '/see_your_homework - Посмотреть домашнее задание конкретного студента',
+        '/start_solving_of_homework - Начать решение домашнего задания',
         '/logout'
 
     ]
     await message.answer('\n'.join(text))
+
+
+@dp.message_handler(Command('start_solving_of_homework'), state=StudentState.FreeState)
+async def start_solving_of_homework(message: types.Message, state: FSMContext):
+    my_student = message.from_user.full_name
+    my_homework = Homework()
+    res = my_homework.read_by_student(my_student)
+    logging.warning(f'Получен ответ от модуля Homework. res = {res}')
+    if not res:
+        await message.answer('У вас нет активных домашних заданий')
+    await message.answer('Вот ваши активные домашние задания')
+    for i in res:
+        await message.answer(i)
+    await message.answer('К какому из них вы хотите приступить?')
+    await StudentState.FirstSolving.set()
+
+
+@dp.message_handler(state=StudentState.FirstSolving)
+async def start_solving_of_homework2(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции logout_admin')
+    name_of_homework = message.text
+    my_homework = Homework()
+    data_to_save = {'status': 'in progress',
+                    'name_of_homework': name_of_homework,
+                    'name_of_student': message.from_user.full_name}
+    res = my_homework.update_status(data_to_save)
+    if res:
+        await message.answer('Статус задачи был изменен на "in progress"')
+    await StudentState.FreeState.set()
 
 
 @dp.message_handler(Command('logout'), state=StudentState.FreeState)
@@ -97,9 +127,9 @@ async def see_homework(message: types.Message, state: FSMContext):
     list_of_homework = my_homework.read()
     for homework in list_of_homework:
         await message.answer(homework)
-    #logging.warning(f'Получен ответ от модуля db. res = {res}')
-    #await message.answer(res)
-    #await message.answer("Тут будет выдача домашнего задания с предметом, фамилией студента, преподавателю")
+    # logging.warning(f'Получен ответ от модуля db. res = {res}')
+    # await message.answer(res)
+    # await message.answer("Тут будет выдача домашнего задания с предметом, фамилией студента, преподавателю")
     logging.warning('Конец функции see_homework')
 
 
@@ -192,7 +222,6 @@ async def see_teacher(message: types.Message, state: FSMContext):
     logging.warning('Конец функции see_teacher')
 
 
-
 @dp.message_handler(Command('see_specific_bell'), state=StudentState.FreeState)
 async def select_custom_bell_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_specific_bell')
@@ -216,7 +245,6 @@ async def select_custom_bell_second(message: types.Message, state: FSMContext):
     logging.warning('Конец функции see_specific_bell')
 
 
-
 @dp.message_handler(Command('see_faculty_by_speciality'), state=StudentState.FreeState)
 async def get_faculty_by_spec_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_faculty_by_speciality')
@@ -232,7 +260,7 @@ async def get_faculty_by_spec_first(message: types.Message, state: FSMContext):
     logging.warning(f'Получен ответ от пользователя. Специальность = {my_spec}')
     my_faculty = Faculty()
     res = my_faculty.read_by_speciality(my_spec)
-    #res = db.get_facultyes_by_spec(my_spec)
+    # res = db.get_facultyes_by_spec(my_spec)
     logging.warning(f'Получен ответ от модуля db. res = {res}')
     await message.answer(res)
     await StudentState.FreeState.set()
@@ -252,10 +280,10 @@ async def get_homework_by_student_first(message: types.Message, state: FSMContex
         await message.answer(i)
     await StudentState.FreeState.set()
     logging.warning('Конец функции see_homework_by_student')
-    #await see_student(message, state)
-    #await message.answer('Напишите имя студента, дз которого вы хотите получить')
-    #logging.warning('Пошел запрос пользователю на имя студента, дз которого вы хотите получить')
-    #await StudentState.HomeworkByStudent.set()
+    # await see_student(message, state)
+    # await message.answer('Напишите имя студента, дз которого вы хотите получить')
+    # logging.warning('Пошел запрос пользователю на имя студента, дз которого вы хотите получить')
+    # await StudentState.HomeworkByStudent.set()
 
 
 @dp.message_handler(state=StudentState.HomeworkByStudent)

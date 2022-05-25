@@ -10,3 +10,4 @@ class StudentState(StatesGroup):
     SelectBell = State()
     FacBySpec = State()
     HomeworkByStudent = State()
+    FirstSolving = State()
