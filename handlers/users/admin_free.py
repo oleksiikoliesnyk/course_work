@@ -618,10 +618,13 @@ async def see_faculty(message: types.Message, state: FSMContext):
 async def see_homework(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_homework')
     await message.answer('Выводим все домашние задания...')
-    res = db.get_homework()
-    logging.warning(f'Получен ответ от модуля db. res = {res}')
-    await message.answer(res)
-    await message.answer("Тут будет выдача домашнего задания с предметом, фамилией студента, преподавателю")
+    my_homework = Homework()
+    list_of_homework = my_homework.read()
+    for homework in list_of_homework:
+        await message.answer(homework)
+    #logging.warning(f'Получен ответ от модуля db. res = {res}')
+    #await message.answer(res)
+    #await message.answer("Тут будет выдача домашнего задания с предметом, фамилией студента, преподавателю")
     logging.warning('Конец функции see_homework')
 
 

@@ -186,7 +186,8 @@ class Bell(DefaultEssence):
 
 class Homework(DefaultEssence):
     def read(self):
-        pass
+        result = db_admin.get_homework()
+        return result
 
     def write(self, data):
         task_id = data['task_id']

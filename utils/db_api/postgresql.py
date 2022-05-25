@@ -109,8 +109,15 @@ class BaseDatabase:
 
     def get_homework(self):
         raw_res = self.low_db.select_homework()
-        res = raw_res
-        return res
+        result_list = []
+        for homework in raw_res:
+            result_string = f'Название предмета = {homework[1]},\n' \
+                            f'Имя студента = {homework[2]}\n' \
+                            f'Название задания = {homework[3]}\n' \
+                            f'Подробности задания = {homework[4]}\n' \
+                            f'Статус задачи = {homework[0]}'
+            result_list.append(result_string)
+        return result_list
 
     def get_id_teacher_by_name(self, name):
         first_id = self.low_db.select_id_teacher_by_name(name)[0][0]
