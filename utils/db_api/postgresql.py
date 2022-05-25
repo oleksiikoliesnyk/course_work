@@ -21,6 +21,7 @@ class BaseDatabase:
         for i in res:
             res_string = f'Текст домашнего задания = {i[0]},\n' \
                          f'Дополнение к домашнему заданию = {i[1]},\n' \
+                         f'Преподаватель, что назначил = {i[3]}\n' \
                          f'Текущий статус задачи = {i[2]}'
             res_list.append(res_string)
         return res_list
@@ -670,10 +671,11 @@ class BaseLowDatabase:
     def select_homework_by_student(self, my_student):
         try:
             with self.conn.cursor() as cur:
-                sql = 'select t.task, t.addition, h.status ' \
+                sql = 'select t.task, t.addition, h.status, tch.full_name ' \
                       'from homework h ' \
                       'inner join task t on h.task_id=t.id ' \
                       'inner join student s on h.id_student=s.id ' \
+                      'inner join teacher tch on tch.id = h.teacher_id ' \
                       f"where s.name = '{my_student}' or s.full_name = '{my_student}' "
                 cur.execute(sql)
                 query_results = cur.fetchall()
