@@ -597,7 +597,7 @@ class BaseLowDatabase:
                   ' from timetable t ' \
                   'inner join speciality s on s.id = t.specialization_id ' \
                   'inner join subject sbj on sbj.id = t.id_subject ' \
-                  f"where s.name = '{speciality}' and s.is_delete<>TRUE "
+                  f"where s.name = '{speciality}'and s.is_delete<>TRUE and sbj.is_delete <> TRUE and t.is_delete <> True"
             cur.execute(sql)
             query_results = cur.fetchall()
             return query_results
@@ -724,8 +724,8 @@ class LowDatabaseForAdmin(BaseLowDatabase):
         self.conn = psycopg2.connect(host="localhost",  # Тут будет вход под пользователем "Админ"
                                      port=5432,
                                      database="University",
-                                     user="postgres",
-                                     password="i183")
+                                     user="admin",
+                                     password="admin_password")
 
     def insert_teacher_for_specialization(self, speciality_id, teacher_id):
         try:
@@ -968,8 +968,8 @@ class LowDatabaseForAdmin(BaseLowDatabase):
     def insert_timetable(self, bell, subject, specialization, day_of_week, course):
         try:
             with self.conn.cursor() as cur:
-                sql = "Insert into timetable(bell_id, id_subject, specialization_id, day_of_week, course) " \
-                      f"values({bell}, {subject}, {specialization}, '{day_of_week}', '{course}')"
+                sql = "Insert into timetable(bell_id, id_subject, specialization_id, day_of_week, course, is_delete) " \
+                      f"values({bell}, {subject}, {specialization}, '{day_of_week}', '{course}', 'False')"
                 cur.execute(sql)
                 self.conn.commit()
                 return True
@@ -1077,8 +1077,8 @@ class LowDatabaseForTeacher(BaseLowDatabase):
         self.conn = psycopg2.connect(host="localhost",  # Тут будет вход под пользователем "Преподаватель"
                                      port=5432,
                                      database="University",
-                                     user="postgres",
-                                     password="i183")
+                                     user="teacher",
+                                     password="teacher_password")
 
 
 class LowDatabaseForStudent(BaseLowDatabase):
@@ -1086,8 +1086,8 @@ class LowDatabaseForStudent(BaseLowDatabase):
         self.conn = psycopg2.connect(host="localhost",  # Тут будет вход под пользователем "Студент"
                                      port=5432,
                                      database="University",
-                                     user="postgres",
-                                     password="i183")
+                                     user="student",
+                                     password="student_password")
 
 
 class Database:

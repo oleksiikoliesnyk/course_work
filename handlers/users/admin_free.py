@@ -310,6 +310,8 @@ async def delete_timetable_first(message: types.Message, state: FSMContext):
 async def delete_timetable_second(message: types.Message, state: FSMContext):
     speciality = message.text
     my_global_dict['delete_timetable_speciality'] = speciality
+    for day in ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'):
+        await message.answer(day)
     await message.answer('Введите день недели')
     await DeanState.DeleteTimeTableSecond.set()
 
@@ -340,7 +342,7 @@ async def delete_timetable_fourth(message: types.Message, state: FSMContext):
             await message.answer('Расписание успешно удалено!')
         else:
             await message.answer('Расписание не было удалено!')
-            await DeanState.FreeState.set()
+        await DeanState.FreeState.set()
     except Exception as err:
         await message.answer(f'Ошибка при удалении расписания = {err}')
         await DeanState.FreeState.set()
@@ -349,6 +351,7 @@ async def delete_timetable_fourth(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('delete_subject'), state=DeanState.FreeState)
 async def delete_subject(message: types.Message, state: FSMContext):
     logging.warning('Началась функция удаления предмета')
+    await see_subject(message, state)
     await message.answer('Введите имя предмета, которого вы хотите удалить')
     await DeanState.DeleteSubject.set()
 
@@ -460,6 +463,7 @@ async def set_admin_third(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('delete_fac'), state=DeanState.FreeState)
 async def delete_fac_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции delete_fac')
+    await see_faculty(message, state)
     await message.answer('Введите имя факультета, которого вы хотите удалить')
     await DeanState.DeleteFaculty.set()
 
@@ -482,6 +486,7 @@ async def delete_fac_second(message: types.Message, state: FSMContext):
 @dp.message_handler(Command('delete_student'), state=DeanState.FreeState)
 async def delete_student_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции delete_student')
+    await see_student(message, state)
     await message.answer('Введите имя студента, которого вы хотите удалить')
     await DeanState.DeleteStudent.set()
 
