@@ -11,6 +11,10 @@ class BaseDatabase:
     def __init__(self):
         self.low_db = BaseLowDatabase()
 
+    def get_homework_id_by_task(self, name_of_homework, id_student):
+        res = self.low_db.select_homework_id_by_name(name_of_homework, id_student)[0][0]
+        return res
+
     def get_subject_id_by_name(self, subject_name):
         res = self.low_db.select_subject_id_by_name(subject_name)[0][0]
         return res
@@ -411,14 +415,29 @@ class DatabaseForTeacher(BaseDatabase):
     def __init__(self):
         self.low_db = LowDatabaseForTeacher()
 
+    def rate_homework(self, name_of_homework, rating, student_to_rate):
+        id_student = self.get_student_id_by_name(student_to_rate)
+        id_homework = self.get_homework_id_by_task(name_of_homework, id_student)
+        res = self.low_db.update_rate(id_homework=id_homework,
+                                      id_student=id_student,
+                                      rating=rating)
+        return res
+
+    def get_homework_by_teacher(self, name_of_teacher):
+        id_teacher = self.get_id_teacher_by_name(name_of_teacher)
+        res = self.low_db.select_homework_by_teacher(id_teacher)
+        result_list = []
+        for i in res:
+            res_string = f'Задание = {i[1]},\n' \
+                         f'Студент, отправивший дз = {i[2]}\n' \
+                         f'Решение = {i[0]}'
+            result_list.append(res_string)
+        return result_list
+
 
 class DatabaseForStudent(BaseDatabase):
     def __init__(self):
         self.low_db = LowDatabaseForStudent()
-
-    def get_homework_id_by_task(self, name_of_homework, id_student):
-        res = self.low_db.select_homework_id_by_name(name_of_homework, id_student)[0][0]
-        return res
 
     def update_status_homework(self, status, name_of_homework, name_of_student):
         id_student = self.get_student_id_by_name(name_of_student)
@@ -435,6 +454,7 @@ class DatabaseForStudent(BaseDatabase):
                                          id_homework=id_homework,
                                          solving=solving)
         return res
+
 
 class BaseLowDatabase:
     def __init__(self):
@@ -702,11 +722,11 @@ class BaseLowDatabase:
                           f"and h.status = 'in progress'"
                 else:
                     sql = 'select t.task, t.addition, h.status, tch.full_name ' \
-                        'from homework h ' \
-                        'inner join task t on h.task_id=t.id ' \
-                        'inner join student s on h.id_student=s.id ' \
-                        'inner join teacher tch on tch.id = h.teacher_id ' \
-                        f"where s.name = '{my_student}' or s.full_name = '{my_student}' "
+                          'from homework h ' \
+                          'inner join task t on h.task_id=t.id ' \
+                          'inner join student s on h.id_student=s.id ' \
+                          'inner join teacher tch on tch.id = h.teacher_id ' \
+                          f"where s.name = '{my_student}' or s.full_name = '{my_student}' "
                 cur.execute(sql)
                 query_results = cur.fetchall()
         except Exception as err:
@@ -757,6 +777,22 @@ class BaseLowDatabase:
             logging.error(err)
             self.conn.rollback()
             return False
+        return query_results
+
+    def select_homework_id_by_name(self, name_of_homework, id_student):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'select h.id ' \
+                      'from homework h ' \
+                      'inner join task t on t.id = h.task_id ' \
+                      f"where t.task = '{name_of_homework}' " \
+                      f"and id_student = {id_student}"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_subject_id_by_name')
+            logging.error(err)
+            self.conn.rollback()
         return query_results
 
 
@@ -1120,6 +1156,40 @@ class LowDatabaseForTeacher(BaseLowDatabase):
                                      user="teacher",
                                      password="teacher_password")
 
+    def select_homework_by_teacher(self, id_teacher):
+        try:
+            with self.conn.cursor() as cur:
+                sql = 'select sgh.solving, t.task, s.full_name ' \
+                      'from homework h ' \
+                      'inner join task t on t.id = h.task_id ' \
+                      'inner join student s on s.id = h.id_student ' \
+                      'inner join solvinghomework sgh on sgh.id_homework = h.id ' \
+                      f'where teacher_id = {id_teacher} and ' \
+                      f"status = 'in reviewe' and t.is_delete<>TRUE"
+                cur.execute(sql)
+                query_results = cur.fetchall()
+        except Exception as err:
+            logging.error('Error in select_subject_id_by_name')
+            logging.error(err)
+            self.conn.rollback()
+        return query_results
+
+    def update_rate(self, id_homework, id_student, rating):
+        try:
+            with self.conn.cursor() as cur:
+                sql = "update homework " \
+                      f"set grade = '{rating}' " \
+                      f"where id_student = {id_student} and " \
+                      f"id = {id_homework}"
+                cur.execute(sql)
+                self.conn.commit()
+                return True
+        except Exception as err:
+            logging.error('Error into insert_task!')
+            logging.error(err)
+            self.conn.rollback()
+            return False
+
 
 class LowDatabaseForStudent(BaseLowDatabase):
     def __init__(self):
@@ -1144,22 +1214,6 @@ class LowDatabaseForStudent(BaseLowDatabase):
             logging.error(err)
             self.conn.rollback()
             return False
-
-    def select_homework_id_by_name(self, name_of_homework, id_student):
-        try:
-            with self.conn.cursor() as cur:
-                sql = 'select h.id ' \
-                      'from homework h ' \
-                      'inner join task t on t.id = h.task_id ' \
-                      f"where t.task = '{name_of_homework}' " \
-                      f"and id_student = {id_student}"
-                cur.execute(sql)
-                query_results = cur.fetchall()
-        except Exception as err:
-            logging.error('Error in select_subject_id_by_name')
-            logging.error(err)
-            self.conn.rollback()
-        return query_results
 
     def insert_solving(self, id_student, id_homework, solving):
         try:

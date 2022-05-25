@@ -8,7 +8,8 @@ from aiogram.types import CallbackQuery
 
 from data.db_constant import facultys
 from data.global_conf import my_global_dict
-from data.controller import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable, Homework, Task
+from data.controller import Faculty, Speciality, Student, Teacher, Bell, Admin, Subject, TimeTable, Homework, Task, \
+    SolvingHomework
 from keyboards.inline.faculty_button.faculty_button import fac_choice
 from keyboards.inline.type_button.type_button import type_choice
 from keyboards.inline.type_button.type_callback import type_callback
@@ -43,6 +44,57 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
     await message.answer('\n'.join(text))
 
 
+@dp.message_handler(Command('rate_homework'), state=TeacherState.FreeState)
+async def logout_tacher(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции logout_admin')
+    await message.answer('Вот список заданий, который вы должны проверить')
+    my_solving = SolvingHomework()
+    res = my_solving.read(name_of_teacher=message.from_user.full_name)
+    for i in res:
+        await message.answer(i)
+    await message.answer('Какое задание вы хотите проверить?')
+    await TeacherState.CheckHomework.set()
+
+
+@dp.message_handler(state=TeacherState.CheckHomework)
+async def logout_tacher(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции logout_admin')
+    await message.answer('Какого студента?')
+    my_global_dict['homework_to_rate'] = message.text
+    await TeacherState.SecondCheckHomework.set()
+
+
+@dp.message_handler(state=TeacherState.SecondCheckHomework)
+async def logout_tacher(message: types.Message, state: FSMContext):
+    my_global_dict['student_to_rate'] = message.text
+    await message.answer('Какую оценку вы хотите поставить?')
+    await TeacherState.ThirdCheckHomework.set()
+
+
+@dp.message_handler(state=TeacherState.ThirdCheckHomework)
+async def logout_tacher(message: types.Message, state: FSMContext):
+    logging.warning('Начало функции logout_admin')
+    rating = message.text
+    if rating not in ('1', '2', '3', '4', '5'):
+        await message.answer('Неверные данные. Оценка от 1 до 5')
+    my_homework = Homework()
+    data = {'homework_to_rate': my_global_dict['homework_to_rate'],
+            'student_to_rate': my_global_dict['student_to_rate'],
+            'rating': rating}
+    res = my_homework.rate_homework(data)
+    if res:
+        await message.answer('Оценка поставлена')
+        data = {'status': 'done',
+                'name_of_homework': my_global_dict['homework_to_rate'],
+                'name_of_student': my_global_dict['student_to_rate']
+                }
+
+        res = my_homework.update_status(data)
+        if res:
+            await message.answer('Статус дз изменен')
+    await TeacherState.FreeState.set()
+
+
 @dp.message_handler(Command('logout'), state=TeacherState.FreeState)
 async def logout_tacher(message: types.Message, state: FSMContext):
     logging.warning('Начало функции logout_admin')
@@ -54,6 +106,7 @@ async def logout_tacher(message: types.Message, state: FSMContext):
         await state.reset_state()
     else:
         await message.answer('Произошла ошибка при логауте')
+
 
 @dp.message_handler(Command('see_bells'), state=TeacherState.FreeState)
 async def see_bells(message: types.Message, state: FSMContext):
@@ -98,9 +151,9 @@ async def see_homework(message: types.Message, state: FSMContext):
     list_of_homework = my_homework.read()
     for homework in list_of_homework:
         await message.answer(homework)
-    #logging.warning(f'Получен ответ от модуля db. res = {res}')
-    #await message.answer(res)
-    #await message.answer("Тут будет выдача домашнего задания с предметом, фамилией студента, преподавателю")
+    # logging.warning(f'Получен ответ от модуля db. res = {res}')
+    # await message.answer(res)
+    # await message.answer("Тут будет выдача домашнего задания с предметом, фамилией студента, преподавателю")
     logging.warning('Конец функции see_homework')
 
 
@@ -193,7 +246,6 @@ async def see_teacher(message: types.Message, state: FSMContext):
     logging.warning('Конец функции see_teacher')
 
 
-
 @dp.message_handler(Command('see_specific_bell'), state=TeacherState.FreeState)
 async def select_custom_bell_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_specific_bell')
@@ -217,7 +269,6 @@ async def select_custom_bell_second(message: types.Message, state: FSMContext):
     logging.warning('Конец функции see_specific_bell')
 
 
-
 @dp.message_handler(Command('see_faculty_by_speciality'), state=TeacherState.FreeState)
 async def get_faculty_by_spec_first(message: types.Message, state: FSMContext):
     logging.warning('Начало функции see_faculty_by_speciality')
@@ -233,7 +284,7 @@ async def get_faculty_by_spec_first(message: types.Message, state: FSMContext):
     logging.warning(f'Получен ответ от пользователя. Специальность = {my_spec}')
     my_faculty = Faculty()
     res = my_faculty.read_by_speciality(my_spec)
-    #res = db.get_facultyes_by_spec(my_spec)
+    # res = db.get_facultyes_by_spec(my_spec)
     logging.warning(f'Получен ответ от модуля db. res = {res}')
     await message.answer(res)
     await TeacherState.FreeState.set()

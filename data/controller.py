@@ -214,6 +214,15 @@ class Homework(DefaultEssence):
         result = db_admin.get_homework_by_student(student, include_status)
         return result
 
+    def rate_homework(self, data):
+        name_of_homework = data['homework_to_rate']
+        rating = data['rating']
+        student_to_rate = data['student_to_rate']
+        res = db_teacher.rate_homework(name_of_homework=name_of_homework,
+                                       rating=rating,
+                                       student_to_rate=student_to_rate)
+        return res
+
 
 class TimeTable(DefaultEssence):
     def read(self, speciality):
@@ -244,8 +253,9 @@ class TimeTable(DefaultEssence):
 
 
 class SolvingHomework(DefaultEssence):
-    def read(self):
-        pass
+    def read(self, name_of_teacher):
+        res = db_teacher.get_homework_by_teacher(name_of_teacher)
+        return res
 
     def write(self, data):
         name_of_student = data['name_of_student']

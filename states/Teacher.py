@@ -10,3 +10,6 @@ class TeacherState(StatesGroup):
     SelectBell = State()
     FacBySpec = State()
     HomeworkByStudent = State()
+    CheckHomework = State()
+    SecondCheckHomework = State()
+    ThirdCheckHomework = State()
