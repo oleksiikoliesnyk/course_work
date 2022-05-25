@@ -80,6 +80,13 @@ async def second_solving_of_homework2(message: types.Message, state: FSMContext)
         await message.answer('Вы успешно отправили решение')
     else:
         await message.answer('Произошла ошибка')
+    my_homework = Homework()
+    data = {'status': 'in reviewe',
+            'name_of_homework': my_global_dict['name_of_homework_to_solve'],
+            'name_of_student': message.from_user.full_name}
+    res = my_homework.update_status(data)
+    if res:
+        await message.answer("Статус задачи изменен на 'in reviewe'")
     await StudentState.FreeState.set()
 
 

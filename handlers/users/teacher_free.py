@@ -36,6 +36,7 @@ async def first_dean_free_function(message: types.Message, state: FSMContext):
         '/see_specific_bell - Просмотреть время начала и конца конкретной пары',
         '/see_faculty_by_speciality - Посмотреть, к какому факультету относится какая специальность',
         '/see_homework_by_student - Посмотреть домашнее задание конкретного студента',
+        '/rate_homework - поставить оценку за домашнее задание студенту',
         '/logout'
 
     ]
