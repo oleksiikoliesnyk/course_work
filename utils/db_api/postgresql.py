@@ -23,10 +23,11 @@ class BaseDatabase:
         res = self.low_db.select_homework_by_student(my_student, include_status)
         res_list = list()
         for i in res:
-            res_string = f'Текст домашнего задания = {i[0]},\n' \
-                         f'Дополнение к домашнему заданию = {i[1]},\n' \
-                         f'Преподаватель, что назначил = {i[3]}\n' \
-                         f'Текущий статус задачи = {i[2]}'
+            res_string = f'Текст домашнего задания = {i[1]},\n' \
+                         f'Дополнение к домашнему заданию = {i[2]},\n' \
+                         f'Преподаватель, что назначил = {i[4]}\n' \
+                         f'Текущий статус задачи = {i[3]}\n' \
+                         f'Дата изменения = {i[0]}'
             res_list.append(res_string)
         return res_list
 
@@ -116,12 +117,13 @@ class BaseDatabase:
         raw_res = self.low_db.select_homework()
         result_list = []
         for homework in raw_res:
-            result_string = f'Название предмета = {homework[1]},\n' \
-                            f'Имя студента = {homework[2]}\n' \
-                            f'Название задания = {homework[4]}\n' \
-                            f'Подробности задания = {homework[5]}\n' \
-                            f'Преподаватель, что назначил = {homework[3]}\n' \
-                            f'Статус задачи = {homework[0]}'
+            result_string = f'Название предмета = {homework[2]},\n' \
+                            f'Имя студента = {homework[3]}\n' \
+                            f'Название задания = {homework[5]}\n' \
+                            f'Подробности задания = {homework[6]}\n' \
+                            f'Преподаватель, что назначил = {homework[4]}\n' \
+                            f'Статус задачи = {homework[1]}\n' \
+                            f'Дата изменения задачи = {homework[0]}'
             result_list.append(result_string)
         return result_list
 
@@ -528,7 +530,7 @@ class BaseLowDatabase:
 
     def select_homework(self):
         with self.conn.cursor() as cur:
-            sql = 'select h.status as "Статус задания", s.name as "Название предмета", std.name as "Имя студента", tch.full_name, ' \
+            sql = 'select h.update_time, h.status as "Статус задания", s.name as "Название предмета", std.name as "Имя студента", tch.full_name, ' \
                   't.task as "Название задачи", t.addition as "Условие задачи" ' \
                   'from homework h ' \
                   'inner join subject s on s.id = h.id_subject ' \
@@ -713,7 +715,7 @@ class BaseLowDatabase:
         try:
             with self.conn.cursor() as cur:
                 if include_status:
-                    sql = 'select t.task, t.addition, h.status, tch.full_name ' \
+                    sql = 'select h.update_time, t.task, t.addition, h.status, tch.full_name ' \
                           'from homework h ' \
                           'inner join task t on h.task_id=t.id ' \
                           'inner join student s on h.id_student=s.id ' \
@@ -721,7 +723,7 @@ class BaseLowDatabase:
                           f"where s.name = '{my_student}' or s.full_name = '{my_student}' " \
                           f"and h.status = 'in progress'"
                 else:
-                    sql = 'select t.task, t.addition, h.status, tch.full_name ' \
+                    sql = 'select h.update_time, t.task, t.addition, h.status, tch.full_name ' \
                           'from homework h ' \
                           'inner join task t on h.task_id=t.id ' \
                           'inner join student s on h.id_student=s.id ' \
